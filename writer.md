@@ -288,6 +288,53 @@ this environment stresses **interactive strategic reasoning**, which static benc
 
 ---
 
+## §7 Affine Model Benchmarks
+
+Goal:
+Present **empirical evidence** that the Affine incentive mechanism produces models that outperform the base model on external benchmarks.
+
+Primary source:
+
+* `benchmark_result.md`
+
+Must include:
+
+* a comparison table: base Qwen3-32B-TEE vs. miner-trained models (Axon1 M19, Leary CX, Leary CS)
+* **stable benchmark results**: BrowseComp-ZH (accuracy), MCP-Bench (tool-call success, task completion, planning), MemoryAgentBench (F1, ROUGE-L)
+* **snapshot benchmark results**: ToolSandbox (similarity), Tau2 (pass rate) — clearly marked as directional only
+* per-benchmark interpretation: what each metric measures and why the improvement matters
+* honest treatment of where miners underperform (Axon1 on BrowseComp-ZH, base on MemoryAgentBench)
+* a summary paragraph on what the data shows about the training pipeline's effectiveness
+
+Do **not** overstate. The data is a single snapshot, not longitudinal tracking.
+
+Target length:
+
+* roughly **600–900 words**
+
+---
+
+## §8 Future Roadmap
+
+Goal:
+Present a concrete, forward-looking roadmap that distinguishes Affine from static benchmark projects.
+
+Must include:
+
+* **72B model scaling**: why moving to a larger base model is planned, what system changes it requires (GPU allocation, inference cost, anti-copy thresholds), and what capability gains are expected
+* **KL-divergence / DISTILL evolution**: teacher model upgrade path, automated teacher selection (promoting top miners), self-improving distillation loop, expanding corpus diversity beyond climbmix-400b-shuffle
+* **Inference infrastructure independence**: migration from Chutes to Affine-operated clusters via Targon, cost and latency benefits
+* **Environment expansion**: knowledge-eval activation, new domains for LiveWeb, multi-agent coordination, longer SWE tasks
+* **Scoring refinement**: anti-copy integration into scoring pipeline, adaptive decay, population-dependent tuning
+
+Frame as **concrete next steps with rationale**, not vague aspirations.
+
+Target length:
+
+* roughly **500–800 words**
+
+---
+
 ## Iterative Workflow
 
 You must follow the workflow below for every target section.

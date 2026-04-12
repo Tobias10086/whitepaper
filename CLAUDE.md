@@ -23,6 +23,9 @@ Draft the following whitepaper sections for the Affine project:
 
    * Note: scoring may be integrated with **The Affine Mechanism** if that produces a stronger narrative.
 
+7. **Affine Model Benchmarks** *(NEW)*
+8. **Future Roadmap** *(NEW — expand existing §6 Future Directions)*
+
 The current emphasis is:
 
 * **Abstract & Introduction**
@@ -31,13 +34,23 @@ The current emphasis is:
 * **System Architecture**
   Focus on how `affinetes` supports clusterized container deployment for environments, how `chutes` is currently used as the GPU inference cluster, and how the system may later adapt to **Targon** machines for a self-owned inference cluster.
 * **Evaluation Environments**
-  Focus on five environments:
+  Focus on six environments:
 
   * **SWE** — `affine-swe-infinite`
   * **LIVEWEB** — `liveweb-arena`
   * **Memory** — `MemoryGym` and related MemoryBench materials
   * **NavWorld / QQR** — `affinetes/environments/qqr/`
   * **GAME / OpenSpiel** — `affinetes/environments/openspiel/`
+  * **DISTILL** — `affinetes/environments/distill/` (KL-divergence distributional alignment)
+
+* **Affine Model Benchmarks** *(NEW)*
+  Based on `benchmark_result.md`. Show that Affine-trained miner models outperform the base model on external benchmarks. Present comparison tables covering stable benchmarks (BrowseComp-ZH, MCP-Bench, MemoryAgentBench) and snapshot benchmarks (ToolSandbox, Tau2).
+
+* **Future Roadmap** *(NEW)*
+  Expand the existing Future Directions into a concrete roadmap covering:
+  * **72B model scaling**: Transition from Qwen3-32B to a 72B base architecture
+  * **KL-divergence training evolution**: How `affinetes/environments/distill/` will evolve — teacher model upgrades, self-improving distillation loops, automated teacher selection
+  * **Inference infrastructure**: Migration path from Chutes to Affine-operated GPU clusters via Targon
 
 ---
 
@@ -304,6 +317,51 @@ Focus points:
 * how this environment differs from simple static QA-style tests
 * what kinds of reasoning and decision-making capabilities it can strengthen
 
+### §5f DISTILL — `affinetes/environments/distill/`
+
+Focus points:
+
+* KL-divergence distributional alignment between student and teacher models
+* three-stage pipeline: teacher rollout generation → R2 promotion → student evaluation
+* scoring formula: per-position KL divergence mapped to [0,1] via exp(−KL)
+* how this complements the five interactive environments by measuring internal representation quality
+* Corpus-Eval as a contamination-resistant prompt source (karpathy/climbmix-400b-shuffle)
+
+---
+
+## §7 Affine Model Benchmarks
+
+This section presents **empirical evidence** that Affine-trained models outperform the base model.
+
+Primary source: `benchmark_result.md`
+
+Must include:
+
+* a comparison table: base Qwen3-32B-TEE vs. miner-trained models
+* **stable benchmarks** (reliable for ranking): BrowseComp-ZH, MCP-Bench, MemoryAgentBench
+* **snapshot benchmarks** (directional only): ToolSandbox, Tau2
+* per-benchmark analysis: what each benchmark measures and why the improvement matters
+* honest treatment of mixed results (some miners underperform on some benchmarks)
+* a summary of what the data shows about the incentive mechanism's effectiveness
+
+Do **not** overstate conclusions — the data is a single snapshot, not longitudinal tracking.
+
+---
+
+## §8 Future Roadmap
+
+Expand the existing Future Directions into a concrete, forward-looking roadmap.
+
+Must include:
+
+* **72B model scaling**: Transition from Qwen3-32B to a 72B base architecture. Why: larger models may benefit more from RL training. What changes in the scoring mechanism (anti-copy detector thresholds, GPU requirements, inference cost).
+* **KL-divergence / DISTILL evolution**: Teacher model upgrade path, automated teacher selection (promoting top miners to teacher status), self-improving distillation loop, expanding Corpus-Eval to more diverse data sources.
+* **Inference infrastructure**: Migration from Chutes to Affine-operated GPU clusters via Targon. Why this matters for cost control, latency, and independence.
+* **Environment expansion**: Knowledge-eval activation, e-commerce and social media domains for LiveWeb, multi-agent coordination, longer-horizon SWE tasks.
+* **Scoring mechanism refinement**: Anti-copy detector integration into scoring pipeline, adaptive absence decay, population-dependent K-factor tuning.
+
+Frame the roadmap as concrete next steps, not vague aspirations.
+
 ---
 
 ## Required Writing Standard
@@ -316,6 +374,7 @@ Every section draft should be:
 * **honest about limitations**
 * **consistent in terminology**
 * **free of unnecessary hype**
+* **visually supported** — use tables, diagrams, and figures where they strengthen comprehension
 
 Avoid empty phrases such as:
 
@@ -324,6 +383,43 @@ Avoid empty phrases such as:
 * “next-generation”
 * “massively scalable”
   unless immediately justified by concrete evidence.
+
+---
+
+## Visual Elements: Tables and Diagrams
+
+Every major section should include at least one **table or diagram** that summarizes, compares, or illustrates its key content. Visual elements are not decoration — they are structural aids that make dense technical content scannable and reviewable.
+
+### When to use tables
+
+* **Parameter summaries**: When a mechanism has 3+ configurable parameters (thresholds, rates, constants), present them in a table rather than inline prose.
+* **Comparison matrices**: When comparing multiple entities (models, environments, deployment modes, mechanisms), use a table with rows = entities and columns = properties.
+* **Benchmark results**: Always present numerical results in tables. Include the metric name, units, and all compared models.
+* **Role/responsibility summaries**: When describing system participants or components, a summary table after the prose helps readers quickly orient.
+
+### When to use diagrams
+
+* **Pipelines and flows**: Multi-stage processes (scoring pipeline, task lifecycle, DISTILL pipeline) should have a Mermaid flowchart or state diagram.
+* **Architecture overviews**: Layered system designs should have a structural diagram showing components and their communication patterns.
+* **Decision trees or logic**: When a mechanism involves conditional branching (anti-copy detection, Pareto filtering), a diagram clarifies the logic better than prose alone.
+
+### Diagram format
+
+Use **Mermaid** syntax (` ```mermaid `) for all diagrams. Mermaid is supported by GitHub, GitLab, most static site generators, and PDF export tools. Keep diagrams focused — one concept per diagram, not the entire system.
+
+### Labeling convention
+
+Number all tables and figures sequentially across the paper:
+* Tables: `**Table N. Title**`
+* Figures: `**Figure N. Title**`
+
+Reference them by number in the surrounding prose where helpful (e.g., “as shown in Table 2” or “the flow in Figure 1”).
+
+### What NOT to visualize
+
+* Do not add diagrams that merely restate a single paragraph of prose.
+* Do not create tables with only one row or two columns — use inline text instead.
+* Do not add visual elements purely for decoration; every table/figure must carry information that the surrounding text does not convey as efficiently.
 
 ---
 

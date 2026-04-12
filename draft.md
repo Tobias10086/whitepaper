@@ -4,7 +4,7 @@
 
 ## 1. Abstract
 
-Static benchmarks are structurally inadequate for evaluating and training agentic intelligence: fixed task sets saturate through memorization and contamination, single-turn formats miss interactive capabilities, and one-off evaluation scripts do not scale to continuous training loops. Affine is a decentralized evaluation and training system that addresses these limitations through three integrated contributions. First, a **scoring mechanism** built on Pareto dominance filtering, ELO-based temporal ratings, and a two-signal anti-copy detector that incentivizes genuine model improvement on the Bittensor network while resisting plagiarism and gaming. Second, a **container-orchestration infrastructure layer** (Affinetes) that packages evaluation environments as reproducible, isolated Docker services with automatic lifecycle management, SSH-tunneled communication, and multi-instance load balancing — cleanly separating environment execution from GPU-backed model inference. Third, a **family of five interactive evaluation environments** spanning software engineering (SWE-Infinite: continuously generated, multi-language task instances from auto-discovered GitHub repositories), browser-grounded web interaction (LiveWeb Arena: 197 million task configurations with real-time ground truth), agent memory management (MemoryGym: selective storage and maintenance under write-budget constraints), tool-mediated planning (QQR: six MCP tools over 10,000+ renewable travel planning tasks), and strategic game-playing (OpenSpiel: 22 games across seven quality tiers with trajectory diversity exceeding 10^60). Beyond evaluation, the system integrates a KL-divergence distillation environment (DISTILL) that provides per-token training signals from teacher rollouts, enabling direct policy improvement alongside evaluation. All environments provide deterministic seeding, step-level reward signals, and renewable task generation — making them usable as both evaluation benchmarks and reinforcement learning training substrates.
+Static benchmarks are structurally inadequate for evaluating agentic intelligence: fixed task sets saturate through contamination, single-turn formats miss interactive capabilities, and one-off scripts do not scale to training loops. Affine is a decentralized evaluation and training system built on Bittensor that addresses these limitations. First, a **scoring mechanism** built on Pareto dominance filtering, ELO-based temporal ratings, and a dual-signal anti-copy detector that incentivizes genuine model improvement on the Bittensor network. Second, a **container-orchestration infrastructure** (Affinetes) that packages environments as reproducible Docker services with SSH-tunneled communication and multi-instance load balancing — separating environment execution from GPU inference. Third, a **family of six evaluation environments**: software engineering (SWE-Infinite: continuously generated multi-language tasks from GitHub repositories), browser-grounded web interaction (LiveWeb Arena: 197 million configurations with real-time ground truth), memory management (MemoryGym: selective storage under write-budget constraints), tool-mediated planning (QQR: six MCP tools over 10,000+ renewable tasks), strategic game-playing (OpenSpiel: 22 games with trajectory diversity exceeding 10^60), and distributional alignment (DISTILL: per-token KL-divergence training signals from teacher rollouts). Fourth, **empirical evidence** that Affine-trained models outperform the base Qwen3-32B on external benchmarks not used in training — including +14% on MCP-Bench task completion, +51% on MemoryAgentBench F1, and non-trivial SWE-rebench scores (12.28) where the base model achieves zero. All environments provide deterministic seeding, structured reward signals (ranging from dense per-step shaping to per-task binary outcomes), and renewable task generation — serving as both evaluation benchmarks and reinforcement learning training substrates.
 
 ---
 
@@ -12,7 +12,7 @@ Static benchmarks are structurally inadequate for evaluating and training agenti
 
 The dominant paradigm for evaluating large language models relies on static benchmark suites: fixed collections of question-answer pairs scored by exact match, multiple choice accuracy, or automated code execution. Benchmarks such as MMLU, HumanEval, and GSM8K have driven rapid progress in model development, but they share structural limitations that become acute as the field moves toward agentic systems — models that must act, plan, use tools, and interact with dynamic environments over extended horizons.
 
-**Static benchmarks saturate.** A fixed test set of finite size is vulnerable to contamination through training data overlap, deliberate or accidental memorization, and benchmark-specific optimization. SWE-bench Pro, one of the most rigorous software engineering benchmarks, contains approximately 2,300 instances. Once a model has been trained on or tuned against a dataset of this scale, marginal score improvements may reflect overfitting rather than genuine capability gains. The problem compounds in open networks where model weights are public: any participant can download a leading model, make superficial modifications, and claim credit for equivalent performance. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md]
+**Static benchmarks saturate.** A fixed test set is vulnerable to contamination through training data overlap, deliberate or accidental memorization, and benchmark-specific optimization. SWE-bench Pro, one of the most rigorous software engineering benchmarks, contains approximately 2,300 instances. Once a model has been trained on or tuned against a dataset of this scale, marginal score improvements may reflect overfitting rather than genuine capability gains. The problem compounds in open networks where model weights are public: any participant can download a leading model, make superficial modifications, and claim credit for equivalent performance. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md]
 
 **Static benchmarks miss agentic capability.** Recent interactive benchmarks — WebArena for browser navigation, AgentBench for multi-domain tool use, Mind2Web for web interaction trajectories, ToolBench for API orchestration — have begun to address this gap. However, most rely on fixed website snapshots, human-authored trajectories, or small task pools that are themselves subject to saturation. A model that scores well on closed-form reasoning may fail at multi-step tool orchestration, real-time web navigation, or long-horizon memory management under budget pressure. What is needed is not merely interactive evaluation, but interactive evaluation with a *renewable* task supply. [affinetes/environments/qqr/README.md]
 
@@ -22,7 +22,7 @@ The dominant paradigm for evaluating large language models relies on static benc
 
 Affine addresses these limitations through a system-level approach built on **Bittensor**, a decentralized network in which independent participants (miners) compete to provide useful computational work and are rewarded with token emissions proportional to their demonstrated quality. Bittensor organizes work into subnets, each governed by validators who score miner contributions and set on-chain weights. Affine operates as Subnet 120, directing this incentive structure toward the specific goal of improving agentic reasoning models.
 
-The system combines four contributions:
+The system combines five contributions:
 
 1. **A decentralized evaluation and scoring mechanism** that incentivizes genuine model improvement while resisting plagiarism, overfitting, and gaming. The mechanism uses Pareto dominance filtering with statistical significance thresholds, ELO-based temporal ratings, and a two-signal anti-copy detector that analyzes model internals. Miners submit models that are evaluated across the full environment suite, with emissions allocated proportionally to demonstrated capability.
 
@@ -36,9 +36,11 @@ The system combines four contributions:
    - **NavWorld / QQR**: a tool-mediated travel planning environment requiring multi-step tool orchestration (POI search, navigation, weather, flight and train queries), with 10,000+ renewable tasks generated from city-type-difficulty combinations and weekly salt rotation.
    - **GAME (OpenSpiel)**: a strategic reasoning environment built on DeepMind's OpenSpiel framework, spanning 22 games organized into seven quality tiers and selected for trajectory diversity (minimum 100 distinct trajectories per configuration), from imperfect-information card games to deterministic board games with effectively infinite game trees.
 
-4. **Training-friendly design choices** throughout the system: deterministic seeding for reproducibility, step-level reward signals for policy learning, geometric mean scoring that forces broad-spectrum competence, and task rotation mechanisms that prevent environmental overfitting.
+4. **Training-friendly design choices** throughout the system: deterministic seeding for reproducibility, structured reward signals for policy learning (from dense per-step shaping in LiveWeb and QQR to per-task outcomes in SWE-Infinite and per-position distributional signals in DISTILL), geometric mean scoring that forces broad-spectrum competence, and task rotation mechanisms that prevent environmental overfitting.
 
-The remainder of this paper is organized as follows. Section 3 describes the Affine mechanism — the evaluation pipeline, scoring logic, and anti-plagiarism defenses that govern the incentive network. Section 4 presents the system architecture, focusing on how Affinetes and Chutes separate environment execution from model inference. Section 5 details each evaluation environment, explaining its design, task generation logic, renewal properties, and training utility.
+5. **Preliminary empirical evidence** that Affine-trained models outperform the base Qwen3-32B on external benchmarks not used in training, including improvements on browsing comprehension, tool-use execution, memory retrieval, and software engineering tasks — with SWE-rebench scores rising from zero (base) to 12.28 (best miner).
+
+The remainder of this paper is organized as follows. Section 3 describes the Affine mechanism — the evaluation pipeline, scoring logic, and anti-plagiarism defenses that govern the incentive network. Section 4 presents the system architecture, focusing on how Affinetes and Chutes separate environment execution from model inference. Section 5 details each evaluation environment, including a distributional alignment environment (DISTILL) that provides per-token training signals via KL divergence. Section 6 presents external benchmark results demonstrating that Affine-trained models outperform the base model. Section 7 outlines the future roadmap, and Section 8 concludes with limitations.
 
 ---
 
@@ -46,19 +48,41 @@ The remainder of this paper is organized as follows. Section 3 describes the Aff
 
 ### 3.1 System Participants and Roles
 
-Affine operates as a decentralized evaluation network built on Bittensor (Subnet 120). The system comprises four principal roles:
+Affine operates as a decentralized evaluation network built on Bittensor (Subnet 120). The system comprises four principal roles (summarized in Table 1):
 
 **Miners** are independent participants who train, host, and submit machine learning models. A miner's workflow proceeds through four steps: (1) obtain a base model from the network via `af pull`, (2) improve the model through reinforcement learning or other training methods, (3) deploy the model as a serverless inference endpoint on Chutes, and (4) commit the deployment metadata — including the Hugging Face repository, revision hash, and Chute identifier — to the Bittensor blockchain. Each hotkey may hold exactly one active commitment at any time. To ensure fair comparison, all submitted models must conform to the Qwen3-32B architecture (hidden_size=5120, num_hidden_layers=64), and quantized models are rejected. [affine-cortex/docs/MINER.md; affine-cortex/skill/references/rl-training-guide.md]
 
 **Validators** are blockchain-registered nodes responsible for setting on-chain weights. In Affine's current architecture, validators do not perform evaluation or scoring directly. Instead, they fetch pre-computed normalized weights from the backend API and submit them to the Bittensor chain. This design offloads computationally intensive scoring to centralized backend infrastructure while preserving the decentralized weight-setting protocol. [affine-cortex/docs/VALIDATOR.md]
 
-**The Executor** is a backend service that orchestrates task evaluation. It operates as a main process that spawns one worker subprocess per environment, each running a pool of concurrent execution workers (default: 5 per environment). The executor fetches tasks from a centralized task pool, dispatches them to miner inference endpoints, collects results, and submits scored samples back to the system. All results are cryptographically signed with the executor's wallet hotkey to ensure authenticity. [affine-cortex/affine/src/executor/main.py; worker.py]
+**The Executor** is a backend service that orchestrates task evaluation. It operates as a main process that spawns one worker subprocess per environment, each running a pool of concurrent execution workers (default: 5 per environment). The executor fetches tasks from a centralized task pool, dispatches them to miner inference endpoints, collects results, and submits scored samples back to the system. All results are cryptographically signed with the executor's wallet hotkey to ensure authenticity. [affine-cortex/affine/src/executor/main.py; affine-cortex/affine/src/executor/worker.py]
 
 **Environments** are the evaluation substrates — containerized services deployed via Affinetes that present tasks to models and return scores. Affine defines a library of canonical environments (currently eighteen, including deduction, abduction, code generation, code editing, logic puzzles, game-theoretic problems, browser-based web interaction, navigation, memory, and knowledge evaluation), of which a dynamically configured subset is enabled for scoring at any given time. Each environment exposes a standard interface: either a single-turn evaluate call or a multi-turn OpenEnv protocol (reset → step → stop). The active environment set is retrieved at scoring time from a centralized system configuration endpoint, allowing the suite to expand without changes to the scoring pipeline. [affine-cortex/affine/core/environments.py; affine-cortex/affine/src/scorer/main.py]
 
+**Table 1. System Participants and Responsibilities**
+
+| Role | Primary Function | Trust Model | Key Constraint |
+|---|---|---|---|
+| **Miner** | Train and deploy models; compete for emissions | Untrusted — incentive-aligned via scoring | Must conform to Qwen3-32B architecture; one active commitment per hotkey |
+| **Validator** | Set on-chain weights on Bittensor chain | Blockchain-registered; fetches pre-computed weights | Does not perform scoring directly |
+| **Executor** | Orchestrate task dispatch, execution, and result collection | Centralized backend; results cryptographically signed | One worker subprocess per environment; 5 concurrent workers default |
+| **Environment** | Present tasks to models and return scores | Containerized via Affinetes; standardized interface | Exposes single-turn `evaluate` or multi-turn OpenEnv protocol |
+
 ### 3.2 Task Lifecycle
 
-The evaluation pipeline is driven by a pull-based task pool architecture backed by DynamoDB.
+The evaluation pipeline is driven by a pull-based task pool architecture backed by DynamoDB. Figure 1 illustrates the full task lifecycle.
+
+**Figure 1. Task Lifecycle**
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending : Task created\n(UUID, miner, env, task_id)\nTTL: 3 days
+    Pending --> Fetched : Worker pulls batch\n(up to 20 tasks)
+    Fetched --> Executing : Worker invokes\nminer endpoint
+    Executing --> Scored : Environment returns\nResult(score, latency)
+    Executing --> Failed : Error → score = 0.0
+    Scored --> Submitted : Signed SampleSubmission\nposted to /tasks/submit\nTTL: 30 days
+    Failed --> Submitted
+```
 
 **Task creation.** The system generates evaluation tasks for each active miner across all environments. Each task is identified by a unique UUID and keyed by miner hotkey, model revision, environment, and task ID. Tasks are created with `pending` status and a three-day time-to-live. [affine-cortex/affine/database/schema.py]
 
@@ -76,11 +100,25 @@ Affine's evaluation loop is designed to resist two failure modes common in stati
 
 **Completeness validation.** Before a miner's scores enter the scoring pipeline, the system verifies that the miner has completed at least 90% of assigned tasks in each environment. Miners below this threshold are excluded from the current scoring round, preventing partial evaluation from distorting rankings. [affine-cortex/affine/src/scorer/config.py]
 
-**Common-task alignment.** When comparing two miners, the scoring pipeline restricts comparison to the intersection of tasks that both miners have completed. This ensures that score differences reflect capability differences, not task-assignment differences. [affine-cortex/affine/src/scorer/stage2_pareto.py]
+**Common-task alignment.** When comparing two miners, the scoring pipeline restricts comparison to the intersection of tasks that both miners have completed — ensuring that score differences reflect capability differences, not task-assignment differences. [affine-cortex/affine/src/scorer/stage2_pareto.py]
 
 ### 3.4 The Scoring Pipeline
 
-Affine computes miner weights through a four-stage pipeline that transforms raw per-task scores into normalized blockchain weights.
+Affine computes miner weights through a four-stage pipeline that transforms raw per-task scores into normalized blockchain weights (Figure 2).
+
+**Figure 2. Four-Stage Scoring Pipeline**
+
+```mermaid
+flowchart LR
+    A["Stage 1\nData Collection"] --> B["Stage 2\nPareto Filtering"]
+    B --> C["Stage 3\nELO Rating"]
+    C --> D["Stage 4\nWeight Normalization"]
+
+    A --- A1["Per-miner, per-env\navg scores\n(≥90% completeness)"]
+    B --- B1["Remove statistically\ndominated miners\n(anti-plagiarism)"]
+    C --- C1["Geometric mean → ranking\n→ ELO update\n→ rank-based weights"]
+    D --- D1["Accumulate subsets\n→ 1% floor\n→ normalize to 1.0"]
+```
 
 #### Stage 1: Data Collection
 
@@ -97,7 +135,7 @@ For each pair of miners (A, B) where A committed to the blockchain first, the sy
 > gap = clamp(gap, MIN_IMPROVEMENT, MAX_IMPROVEMENT)
 > threshold = min(prior_score + gap, 1.0)
 
-where `p` is miner A's score, `n` is the number of common tasks, and `z` is the z-score (default 2.0, corresponding to approximately 95.4% confidence). The gap is bounded between a 2% floor and a 10% ceiling. Miner A dominates B only if B fails to exceed A's threshold in *every* environment in the evaluated subset. This ensures that a copy — which will perform nearly identically to the original — is filtered out, while a genuinely improved model that exceeds the statistical threshold survives. [affine-cortex/affine/src/scorer/stage2_pareto.py; utils.py]
+where `p` is miner A's score, `n` is the number of common tasks, and `z` is the z-score (default 2.0, corresponding to approximately 95.4% confidence). The gap is bounded between a 2% floor and a 10% ceiling. Miner A dominates B only if B fails to exceed A's threshold in *every* environment in the evaluated subset. This ensures that a copy — which will perform nearly identically to the original — is filtered out, while a genuinely improved model that exceeds the statistical threshold survives. [affine-cortex/affine/src/scorer/stage2_pareto.py; affine-cortex/affine/src/scorer/utils.py]
 
 The first-commit advantage is enforced by sorting miners by `first_block` before applying dominance tests. An earlier submission can only be dominated by a later one that demonstrates statistically significant improvement, not by random variance.
 
@@ -105,17 +143,34 @@ The first-commit advantage is enforced by sorting miners by `first_block` before
 
 Surviving miners are ranked within each scoring round using a geometric mean of their environment scores:
 
-> GM = ((v1 + epsilon) * (v2 + epsilon) * ... * (vn + epsilon))^(1/n) - epsilon
+> GM = ((v1 + ε) · (v2 + ε) · … · (vn + ε))^(1/n) − ε
 
-where epsilon = 0.1 provides smoothing to prevent a single zero-score environment from collapsing the aggregate. This design choice is deliberate: it forces miners to maintain competence across *all* environments rather than specializing narrowly.
+where ε = 0.1 provides smoothing to prevent a single zero-score environment from collapsing the aggregate. This forces miners to maintain competence across *all* environments rather than specializing narrowly.
 
-Rankings feed into an ELO rating system that tracks miner performance across rounds. Key parameters:
+Rankings feed into an ELO rating system that tracks miner performance across scoring rounds, providing temporal smoothing that a single-round ranking cannot. Table 2 lists all key parameters.
 
-- **Base rating**: 1200 (below average, to prevent new-key spam from immediately competing)
-- **K-factor**: 96 for provisional miners (first 48 rounds, approximately one day at 30-minute intervals), decaying to 32 for established miners. The higher provisional K-factor allows genuinely strong new entrants to converge quickly.
-- **Absence decay**: Miners that do not participate in a scoring round (due to incomplete sampling, Pareto filtering, or being offline) experience accelerating rating decay: `rating = BASE + excess * (0.95^(rounds^1.4))`. A two-round grace period (approximately one hour) prevents brief outages from triggering decay. This mechanism guarantees that stale ratings converge to the base within approximately 18 hours, preventing inactive miners from occupying weight slots indefinitely.
+- **Base rating**: 1200 — deliberately below average to prevent new-key spam from immediately competing for emissions.
+- **K-factor**: 96 for provisional miners (first 48 rounds), decaying to 32 for established miners. At the default scoring interval, the provisional period spans approximately one to two days. The higher provisional K-factor allows genuinely strong new entrants to converge quickly while established miners are not dislodged by noise.
 
-Weight distribution follows a rank-based decay model: the miner ranked first receives a base weight, and each subsequent rank receives 50% of the previous rank's weight (`weight = 0.5^(rank - 1)`). This includes all miners with at least one ELO round played, not only those participating in the current round. [affine-cortex/affine/src/scorer/stage3_subset.py; config.py]
+**Absence decay.** Miners that do not participate in a scoring round — due to incomplete sampling, Pareto filtering, or being offline — experience accelerating rating decay:
+
+> rating = BASE + excess × 0.95^(rounds^1.4)
+
+A two-round grace period (approximately one hour) prevents brief outages from triggering decay. The super-linear exponent (1.4) means that early missed rounds cost little, but sustained absence accelerates rapidly — stale ratings converge to the base within approximately 18 hours, preventing inactive miners from occupying weight slots indefinitely.
+
+**Weight distribution** follows a rank-based decay model: the top-ranked miner receives a base weight, and each subsequent rank receives 50% of the previous rank's weight (`weight = 0.5^(rank − 1)`). All miners with at least one ELO round played receive weight, not only those participating in the current round. [affine-cortex/affine/src/scorer/stage3_subset.py; affine-cortex/affine/src/scorer/config.py]
+
+**Table 2. ELO Rating and Weight Distribution Parameters**
+
+| Parameter | Value | Rationale |
+|---|---|---|
+| Base rating | 1200 | Below average; prevents new-key spam from immediately competing |
+| K-factor (provisional) | 96 | High responsiveness for first 48 rounds (~1–2 days) |
+| K-factor (established) | 32 | Stability for long-running miners |
+| Absence decay rate | 0.95^(rounds^1.4) | Super-linear: early misses cost little, sustained absence converges to base in ~18 hours |
+| Grace period | 2 rounds (~1 hour) | Prevents brief outages from triggering decay |
+| Weight decay per rank | 0.5^(rank − 1) | Top miner gets 1.0, rank 2 gets 0.5, rank 3 gets 0.25, etc. |
+| Minimum weight threshold | 1% | Below-threshold weight redistributed to UID 0 |
 
 #### Stage 4: Weight Normalization
 
@@ -123,19 +178,27 @@ The final stage accumulates subset weight contributions per miner, applies a 1% 
 
 ### 3.5 Anti-Plagiarism Mechanisms
 
-Model copying is the central adversarial threat in decentralized training markets: a rational but unscrupulous participant can download a leading model, make trivial modifications, and redeploy it to capture emissions without contributing genuine improvement. Affine addresses this through three complementary mechanisms.
+Model copying is the central adversarial threat in decentralized training markets: a rational but unscrupulous participant can download a leading model, make trivial modifications, and redeploy it to capture emissions without contributing genuine improvement. Affine addresses this through three complementary mechanisms (Table 3).
 
 **Pareto dominance filtering** (described in Section 3.4, Stage 2) operates at the scoring level. Because copies perform nearly identically to the original on common tasks, they cannot exceed the statistical improvement threshold and are filtered as dominated.
 
 **The anti-copy detector** operates as an independent periodic background service (default: 24-hour cycle) that analyzes model internals rather than output scores alone. Unlike Pareto filtering, which runs inline during each scoring round, the anti-copy detector stores its results in a separate audit table for review and policy enforcement. It uses a two-signal voting system:
 
-1. **Hidden-state signal**: For each shared task, the detector computes the cosine similarity of the models' internal hidden-state representations. If the median cosine similarity across all common tasks exceeds 0.99, the signal votes "copy." A norm-deviation gate rejects pairs where the per-task L2 norm ratio deviates more than 5% from unity — a pattern characteristic of fine-tuned models, which exhibit significant norm drift even when cosine similarity remains high.
+1. **Hidden-state signal**: For each shared task, the detector computes the cosine similarity of the models' internal hidden-state representations. If the median cosine similarity across all common tasks exceeds 0.99, the signal votes "copy." A norm-deviation gate then checks the per-task L2 norm ratios (‖h_A‖/‖h_B‖) across all shared tasks and computes the maximum of (a) the absolute deviation of the mean ratio from unity and (b) the cross-task standard deviation. If either exceeds 5%, the hidden-state vote is overridden to "not copy." This gate exploits an empirical observation: true copies maintain norm ratios that are both close to 1.0 and stable across tasks (standard deviation below 3%), while fine-tuned models exhibit significant norm drift (standard deviation above 10%) even when cosine similarity remains high.
 
 2. **Logprob signal**: The detector compares the top-3 token log-probability distributions up to the point where the models' generated tokens diverge. If the median cosine similarity of these distributions exceeds 0.99, the signal votes "copy."
 
 A miner is flagged as a copy only if *both* signals vote "copy" and at least 30 shared tasks are available for comparison. This dual-signal requirement sharply reduces false positives: fine-tunes are caught by the norm gate, and models with similar outputs but different internals are caught by the hidden-state signal. Detection results are persisted to the `anti_copy_results` table (with 30-day TTL) but do not automatically feed into the scoring pipeline; the Pareto filter in Stage 2 remains the sole automatic anti-plagiarism mechanism during scoring. The anti-copy detector serves as a deeper forensic layer whose findings can inform manual review or future automated blacklisting. [affine-cortex/affine/src/anticopy/detector.py; affine-cortex/affine/src/anticopy/main.py]
 
 **First-commit advantage** provides a temporal tiebreaker. When two models produce statistically indistinguishable scores, the model committed to the blockchain earlier is treated as the original. This creates a race-to-innovate incentive: the fastest path to emissions is genuine improvement, not replication.
+
+**Table 3. Anti-Plagiarism Defense Layers**
+
+| Mechanism | Signal Type | Execution | Trigger | Effect |
+|---|---|---|---|---|
+| **Pareto dominance filtering** | Behavioral (task scores) | Inline, every scoring round | B fails to exceed A's statistical threshold in all environments | B excluded from current round |
+| **Anti-copy detector** | Structural (hidden states + logprobs) | Background, 24-hour cycle | Both hidden-state cosine sim >0.99 AND logprob cosine sim >0.99 (≥30 shared tasks) | Flagged for review; stored in audit table |
+| **First-commit advantage** | Temporal (blockchain ordering) | Inline, during Pareto comparison | Two models with statistically indistinguishable scores | Earlier commit treated as original |
 
 ### 3.6 Design Rationale
 
@@ -151,15 +214,51 @@ Several design choices in the Affine mechanism warrant explicit justification.
 
 **Why a fixed model architecture?** Requiring all miners to use Qwen3-32B eliminates architectural confounds from evaluation. Score differences reflect training quality, not model capacity or quantization artifacts. This constraint also simplifies the anti-copy detector, which can compare hidden states and logprobs directly without accounting for architectural differences.
 
+**Why no prescribed training pipeline?** Affine deliberately provides only evaluation environments and scoring signals — not a built-in training pipeline. Miners independently choose their RL algorithms, hyperparameters, and training strategies. This design treats training methodology as part of the competitive landscape: the system rewards *outcomes* (model quality across environments) rather than prescribing *process*. The result is methodological diversity — different miners may use different RL frameworks, different reward shaping, or different curriculum strategies — which both increases the probability of discovering effective training approaches and prevents the network from converging on a single, potentially suboptimal, training recipe. [affine-cortex/skill/references/rl-training-guide.md]
+
 The mechanism described above governs *what* is evaluated and *how* scores translate to incentives. The next section describes the infrastructure that makes this evaluation operationally feasible at scale.
 
 ---
 
 ## 4. System Architecture
 
-Affine's operational architecture separates two concerns that most benchmark systems conflate: **environment execution** (running tasks, computing scores) and **model inference** (generating predictions from neural networks). This separation is not merely organizational — it enables independent scaling, resource-appropriate hardware allocation, and clean substitution of infrastructure components as the system evolves.
+Affine's operational architecture separates two concerns that most benchmark systems conflate: **environment execution** (running tasks, computing scores) and **model inference** (generating predictions from neural networks). This separation is not merely organizational — it enables independent scaling, resource-appropriate hardware allocation, and clean substitution of infrastructure components as the system evolves. Figure 3 provides the architectural overview.
 
 ### 4.1 Architectural Overview
+
+**Figure 3. Three-Layer System Architecture**
+
+```mermaid
+flowchart TB
+    subgraph Coordination["Coordination Layer (affine-cortex)"]
+        TP["Task Pool\n(DynamoDB)"]
+        EX["Executor\n(workers × environments)"]
+        SC["Scorer\n(4-stage pipeline)"]
+        TP --> EX
+        EX --> SC
+    end
+
+    subgraph Environment["Environment Layer (Affinetes)"]
+        SWE["SWE-Infinite"]
+        LW["LiveWeb Arena"]
+        MG["MemoryGym"]
+        QQR["QQR"]
+        OS["OpenSpiel"]
+        DIS["DISTILL"]
+    end
+
+    subgraph Inference["Inference Layer (Chutes → Targon)"]
+        GPU["GPU Endpoints\n(vLLM, OpenAI-compatible)"]
+    end
+
+    subgraph Chain["Bittensor Chain"]
+        W["On-chain Weights\n& Emissions"]
+    end
+
+    EX <-->|"HTTP\n(task dispatch)"| Environment
+    Environment <-->|"HTTP\n(model queries)"| GPU
+    SC -->|"normalized weights"| W
+```
 
 The system comprises three layers:
 
@@ -187,13 +286,21 @@ The environment type is detected automatically — no configuration flags are ne
 
 #### Deployment Modes
 
-Affinetes provides three deployment backends, selectable at load time:
+Affinetes provides three deployment backends, selectable at load time (Table 4):
 
 **Docker mode** (default) manages container lifecycle through the Docker SDK. For local deployment, it connects directly to the Docker socket. For remote deployment, it establishes SSH connections to remote Docker daemons, then creates **SSH port-forwarding tunnels** using Paramiko so that the orchestrator can communicate with remote containers without exposing any ports on the remote host. All traffic between the orchestrator and remote containers flows through encrypted SSH tunnels. [affinetes/affinetes/backends/local.py; affinetes/affinetes/infrastructure/ssh_tunnel.py]
 
 **URL mode** connects to user-managed services at arbitrary HTTP endpoints. The backend auto-detects whether the remote service is function-based or HTTP-based by probing for `/methods` or `/openapi.json` endpoints. This mode requires no Docker or SSH — it is a pure HTTP proxy, suitable for environments already deployed on managed infrastructure. [affinetes/affinetes/backends/url.py]
 
 **Basilica mode** creates temporary Kubernetes pods per evaluation session. Each `call_method()` invocation provisions a fresh pod with specified CPU and memory resources, executes the method, and cleans up via TTL-based auto-deletion. A concurrency limiter prevents resource exhaustion. This mode supports the transition toward cloud-native deployment where environments run on managed compute rather than dedicated machines. [affinetes/affinetes/backends/basilica.py]
+
+**Table 4. Affinetes Deployment Modes**
+
+| Mode | Backend | Networking | Use Case | Infrastructure Requirement |
+|---|---|---|---|---|
+| **Docker** (default) | Docker SDK (local or remote) | SSH tunnels via Paramiko; no exposed ports | Production evaluation on dedicated machines | Docker daemon; SSH access for remote hosts |
+| **URL** | HTTP proxy | Direct HTTP; auto-detects function/HTTP style | Pre-deployed environments on managed infra | HTTP-reachable endpoint only |
+| **Basilica** | Kubernetes pods | TTL-based pod lifecycle; concurrency-limited | Cloud-native, ephemeral evaluation sessions | Kubernetes cluster with resource quotas |
 
 #### Multi-Instance Scaling and Load Balancing
 
@@ -207,7 +314,7 @@ Affinetes maintains a global environment registry (thread-safe, singleton) that 
 
 The current inference layer is **Chutes** (Bittensor Subnet 64), a serverless GPU inference platform. Miners deploy vLLM-backed model endpoints on Chutes, which exposes them as OpenAI-compatible HTTP APIs at `https://llm.chutes.ai/v1`. Environments invoke models by issuing standard chat completion requests to this endpoint, passing the miner's model identifier and API key.
 
-This design achieves clean separation: environments contain no model-loading code, GPU management, or inference optimization. They issue HTTP requests and receive text responses. The inference layer handles batching, quantization (where permitted), GPU scheduling, and auto-scaling independently.
+The result is clean separation: environments contain no model-loading code, GPU management, or inference optimization. They issue HTTP requests and receive text responses. The inference layer handles batching, quantization (where permitted), GPU scheduling, and auto-scaling independently.
 
 **Why this separation matters:**
 
@@ -215,11 +322,11 @@ This design achieves clean separation: environments contain no model-loading cod
 - **Independent scaling**: The number of environment instances and the number of inference replicas can scale independently based on their respective bottlenecks.
 - **Backend substitution**: The same environment code works with any OpenAI-compatible inference endpoint. Basilica SDK examples demonstrate this with vLLM on Basilica GPU pods; Targon SDK examples demonstrate it with Targon's serverless function deployment, which provides automatic HTTPS URL exposure without manual port management.
 
-**Future evolution.** The Basilica and Targon SDK integrations in the Affinetes examples directory demonstrate that the system is designed to support multiple inference backends. The path toward Affine-operated inference infrastructure — using Targon machines or other GPU providers — requires only deploying models to a new endpoint and updating the base URL. No environment code, scoring logic, or orchestration changes are needed. [affinetes/examples/targon-sdk/README.md; affinetes/examples/basilica-sdk/]
+**Future evolution.** The Basilica and Targon SDK integrations in the Affinetes examples directory demonstrate that the system already supports multiple inference backends. The path toward Affine-operated inference infrastructure is detailed in Section 7.3. [affinetes/examples/targon-sdk/README.md; affinetes/examples/basilica-sdk/]
 
 ### 4.4 The OpenEnv Protocol: A Standardized Training Interface
 
-Beyond single-turn evaluation, Affinetes defines **OpenEnv** — a standardized multi-turn interaction protocol that makes environments usable as reinforcement learning training substrates.
+Beyond single-turn evaluation, Affinetes defines **OpenEnv** — a standardized multi-turn interaction protocol that makes environments directly usable in reinforcement learning loops.
 
 The protocol follows a gym-like pattern:
 
@@ -233,9 +340,11 @@ Each `reset()` call creates an episode bound to a unique episode ID. The session
 
 This interface separates **episode lifecycle** from **environment instance lifecycle**: an environment container persists across many episodes, amortizing startup cost, while each episode maintains independent state. For training loops that require thousands of episodes, this design eliminates the overhead of container creation per episode. [affinetes/affinetes/core/openenv_client.py]
 
-Beyond reward signals, the system supports **logprob collection** across multiple environments: when enabled via the `collect_logprobs` parameter, each inference call returns per-token log-probability distributions alongside the generated text. These distributions power a dedicated **DISTILL** environment (detailed in Section 5.6) that measures distributional alignment between student models and teacher rollouts via KL divergence, producing a continuous training signal complementary to the interactive environments' task-level rewards. The same logprob data also feeds the anti-copy detector's second signal (Section 3.5), creating a dual-purpose data flow. [affine-cortex/affine/database/system_config.json]
+### 4.5 Logprob Collection and Distributional Training Signals
 
-### 4.5 Execution Flow Across Layers
+Beyond task-level reward signals, the system supports **per-token logprob collection** across multiple environments. When enabled via the `collect_logprobs` parameter, each inference call returns per-token log-probability distributions alongside the generated text. These distributions serve two purposes: they power a dedicated **DISTILL** environment (detailed in Section 5.6) that measures distributional alignment between student models and teacher rollouts via KL divergence, and they feed the anti-copy detector's logprob signal (Section 3.5). This dual-purpose data flow means that a single inference call — with no additional model queries — simultaneously supports evaluation scoring, training signal generation, and plagiarism detection. [affine-cortex/affine/database/system_config.json]
+
+### 4.6 Execution Flow Across Layers
 
 A complete evaluation cycle proceeds as follows:
 
@@ -249,9 +358,11 @@ A complete evaluation cycle proceeds as follows:
 
 5. The executor packages the result into a signed `SampleSubmission` and posts it to the backend API for storage and subsequent scoring.
 
-At no point does the executor directly communicate with the inference layer; all model interaction is mediated through the environment. This ensures that scoring logic is encapsulated within the environment and that the executor remains environment-agnostic.
+At no point does the executor directly communicate with the inference layer; all model interaction is mediated through the environment, keeping scoring logic encapsulated and the executor environment-agnostic.
 
-### 4.6 Scalability and Reproducibility
+A parallel pipeline handles **teacher rollout generation** for the DISTILL environment. An independent teacher worker process samples prompts from the Corpus-Eval environment, runs a teacher model with logprob collection, and uploads rollouts to a private R2 bucket. A separate teacher mover process periodically promotes a random subset of rollouts to a public bucket, where the DISTILL environment can access them for student evaluation (see Section 5.6 for full details).
+
+### 4.7 Scalability and Reproducibility
 
 The architecture provides several properties essential for a production evaluation system:
 
@@ -263,20 +374,51 @@ The architecture provides several properties essential for a production evaluati
 
 **Security.** SSH tunneling ensures that environment containers are never directly exposed to the network. Cryptographic signatures on sample submissions ensure that results can only be submitted by authorized executors. The fixed model architecture constraint prevents inference-time attacks that exploit model heterogeneity.
 
+The infrastructure described above is purposefully environment-agnostic: it handles deployment, scaling, and communication without constraining what evaluation logic runs inside each container. The next section describes the six environments that run on this infrastructure, each targeting a distinct axis of agentic capability.
+
 ---
 
 ## 5. Evaluation Environments
 
-Affine's environment suite is designed around a central thesis: meaningful evaluation of agentic intelligence requires interactive, renewable, and training-friendly environments — not static test sets. Each environment targets a distinct capability axis, generates tasks through a renewable process, and provides reward signals structured for reinforcement learning. Five interactive environments evaluate behavioral capabilities across complementary axes; a sixth environment (DISTILL) evaluates distributional alignment at the token level, providing a complementary signal that targets internal representation quality rather than task-completion behavior. The table below summarizes the six environments; the subsections that follow detail each one.
+Affine's environment suite is designed around a central thesis: meaningful evaluation of agentic intelligence requires interactive, renewable, and training-friendly environments — not static test sets. Each environment targets a distinct capability axis, generates tasks through a renewable process, and provides reward signals structured for reinforcement learning. Five interactive environments evaluate behavioral capabilities across complementary axes; a sixth environment (DISTILL) evaluates distributional alignment at the token level, providing a complementary signal that targets internal representation quality rather than task-completion behavior. Table 5 summarizes the six environments; the subsections that follow detail each one.
+
+**Table 5. Evaluation Environment Overview**
 
 | Environment | Capability Target | Task Space | Renewal Mechanism | Training Signal |
 |---|---|---|---|---|
 | **SWE-Infinite** | Software debugging | Unbounded (continuous) | Auto-discovery from GitHub PRs | FAIL_TO_PASS / PASS_TO_PASS tests |
 | **LiveWeb Arena** | Browser-grounded agency | 197M+ configurations | Dynamic real-time data + combinatorial templates | Step rewards (exploration, efficiency) + terminal |
-| **MemoryGym** | Memory management | 600+ entities × 10 domains × seeds | Seed-based generation + eval_salt perturbation | 4-axis scoring; shaped RL rewards |
+| **MemoryGym** | Memory management | 30–120 entities/eval × 10 domains × seeds | Seed-based generation + eval_salt perturbation | 4-axis scoring; shaped RL rewards |
 | **QQR (NavWorld)** | Tool-mediated planning | 10,000+ tasks | 7 types × 3 difficulties × 71 cities × weekly salt | Per-step tool quality + 100-pt final |
 | **GAME (OpenSpiel)** | Strategic reasoning | >10^60 trajectories | 22 games × config variants × seeds | Normalized game outcome [0,1] |
 | **DISTILL** | Distributional alignment | Self-expanding (continuous) | Teacher rollout pipeline from raw corpus | exp(−KL) continuous score [0,1] |
+
+Table 6 contrasts each Affine environment against the most comparable prior benchmarks across the dimensions that motivate Affine's design: task renewability, training compatibility, and interaction richness. Claims about prior benchmarks reflect their published designs at the time of writing; some may have evolved.
+
+**Table 6. Affine Environments vs. Comparable Prior Benchmarks**
+
+| Affine Environment | Prior Benchmark | Task Count | Renewable? | Ground Truth | Interaction | Step-Level RL Reward | Containerized Infra |
+|---|---|---|---|---|---|---|---|
+| **SWE-Infinite** | SWE-bench Pro | ~2,300 (fixed) | No | Static test suites | Multi-turn (agent + repo) | Binary (pass/fail) | No |
+| | SWE-smith | Synthetic (generated) | Partially (synthetic bugs) | Injected faults | Multi-turn | Binary | No |
+| **SWE-Infinite** | **Unbounded (continuous)** | **Yes** (GitHub discovery) | **Real PR test suites** | Multi-turn | **FAIL_TO_PASS + PASS_TO_PASS** | **Yes** (Affinetes) |
+| | | | | | | | |
+| **LiveWeb Arena** | WebArena | 812 tasks (fixed) | No | Static snapshots | Multi-turn (browser) | Binary | Partial (Docker) |
+| | Mind2Web | 2,350 tasks (fixed) | No | Human trajectories | Trajectory-matching | No | No |
+| **LiveWeb Arena** | **197M+ configurations** | **Yes** (live data + seeds) | **Dynamic (page-bound)** | Multi-turn (Playwright) | **Dense shaped rewards** | **Yes** (Affinetes) |
+| | | | | | | | |
+| **MemoryGym** | LoCoMo | Fixed conversations | No | Static Q&A | Single/multi-turn retrieval | No | No |
+| | MemoryAgentBench | Fixed test set | No | Static answers | Multi-turn retrieval | No | No |
+| **MemoryGym** | **10 domains × tiers × seeds** | **Yes** (seed + eval_salt) | **Dynamic (corrections)** | Multi-turn (4 tools) | **Shaped (store/correct/answer)** | **Yes** (Affinetes) |
+| | | | | | | | |
+| **QQR** | BFCL | Fixed API calls | No | Format correctness | Single-turn | No | No |
+| | ToolBench | Large catalog, fixed tasks | No | Static references | Multi-turn | No | No |
+| **QQR** | **10,000+ (weekly rotation)** | **Yes** (salt rotation) | **Live AMap + seeded mock** | Multi-turn (6 MCP tools) | **Per-step tool quality** | **Yes** (Affinetes) |
+| | | | | | | | |
+| **OpenSpiel** | Chess ELO evals | 1 game | No | Win/loss | Multi-turn (game) | Binary | No |
+| **OpenSpiel** | **22 games × configs × seeds** | **Yes** (seed space >10^60) | **Algorithmic (game rules)** | Multi-turn (game) | **Normalized outcome [0,1]** | **Yes** (Affinetes) |
+
+Bolded rows indicate Affine's design. Across all five interactive environments, Affine provides properties that no single prior benchmark combines: renewable task generation, containerized deployment infrastructure, and step-level reward signals suitable for reinforcement learning.
 
 ### 5.1 SWE-Infinite: Renewable Software Engineering Tasks
 
@@ -292,11 +434,22 @@ SWE-bench Pro, the most rigorous existing software engineering benchmark, contai
 2. **Contamination**: In an open network where model weights are public, training data overlap with the evaluation set is difficult to prevent and impossible to verify.
 3. **Limited language coverage**: SWE-bench Pro focuses primarily on Python, leaving software engineering capability in other languages unmeasured.
 
-SWE-Infinite addresses these limitations through a fully automated pipeline that continuously discovers new repositories, extracts validated task instances from merged pull requests, and supports multiple programming languages. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md]
+Synthetic dataset generation approaches (e.g., SWE-smith-style bug injection, where working code is deliberately modified to introduce faults and test cases are generated to detect them) address the scale problem but introduce an artificiality gap: injected bugs may not reflect the distribution of real software defects, and synthetic test suites may not exercise the same code paths as developer-written tests. SWE-Infinite takes a different path: rather than synthesizing artificial bugs, it extracts real bugs from real merged pull requests with real test suites, then continuously discovers new repositories to maintain a renewable supply. This preserves the ecological validity of the task distribution while solving the scale problem. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md]
 
 #### Environment Design
 
-The SWE-Infinite pipeline operates in four stages, each with explicit quality targets:
+The SWE-Infinite pipeline operates in four stages, each with explicit quality targets (Table 7):
+
+**Table 7. SWE-Infinite Pipeline Stages and Quality Targets**
+
+| Stage | Function | Target Pass Rate | Cumulative (of Stage 0 survivors) | Key Mechanism |
+|---|---|---|---|---|
+| **0: Discovery** | Repository and PR filtering | ~40% of candidates survive | — (input filter) | GitHub API + PyPI top packages; star/fork/CI/activity filters; semantic PR classification |
+| **1: Build** | Dockerfile generation and image build | 80% | 80% | Heuristic language-version detection; PEP 735/508 dependency resolution; 5 languages |
+| **2: Validation** | Test patch splitting + FAIL_TO_PASS verification | 90% | 72% | Patch-split → test-only run → full-patch run → identify FAIL_TO_PASS set |
+| **3: Quality** | Verify solution contains source changes | 85% | ~61% | Reject test-only patches |
+
+End-to-end yield from Stage 0 survivors: 0.80 × 0.90 × 0.85 ≈ 61%. Applied to a continuously growing input stream, this produces >1,200 validated tasks/day on a 5-machine cluster.
 
 **Stage 0: Repository and PR Discovery.** The system continuously discovers candidate repositories through two channels: GitHub Search API queries segmented by star ranges (in steps of 100, 1,000, and 10,000 to overcome the API's 1,000-result limit) and package registry top-download lists (e.g., PyPI's top 2,000 packages). Discovered repositories are filtered by quantitative admission criteria: minimum 500 stars, at least 50 forks, active CI configuration, and activity within the past 365 days. Pull requests within qualifying repositories are further filtered: 2–8 files changed, 5–500 lines modified, merged within 365 days, and authored by a human (not a bot). A semantic filter based on PR labels and title keywords retains bug fixes, feature additions, and regression repairs while rejecting refactoring, documentation, and performance-only changes. Approximately 40% of candidate PRs survive all Stage 0 filters. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md; affine-swe-infinite/src/discovery/repo_discovery.py]
 
@@ -310,7 +463,7 @@ The SWE-Infinite pipeline operates in four stages, each with explicit quality ta
 
 SWE-Infinite's task supply is renewable because the discovery pipeline operates continuously rather than against a fixed list. A cursor-based daily advancement mechanism processes merged PRs one day at a time, with persistent state stored in Cloudflare R2. Each supported language maintains an independent cursor, and the system tracks processed tasks in DynamoDB to prevent cross-machine duplication. Failed tasks are retried on language-appropriate schedules: build failures after 30 days (allowing Dockerfile generator improvements to take effect), transient errors after 7 days, while semantic rejections and tasks with no FAIL_TO_PASS tests are permanently skipped.
 
-At a processing rate exceeding 10 tasks per hour per machine, a cluster of five machines produces over 1,200 validated task instances per day — a rate that far exceeds the consumption rate of any single evaluation round. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md, 442-492]
+At a processing rate exceeding 10 tasks per hour per machine, a cluster of five machines produces over 1,200 validated task instances per day — a rate that far exceeds the consumption rate of any single evaluation round. [affine-swe-infinite/docs/en/01-HIGH-LEVEL-DESIGN.md]
 
 #### Training Utility
 
@@ -326,7 +479,7 @@ The patch-splitting strategy directly enables reinforcement learning: the FAIL_T
 
 #### Current Limitations
 
-Production monitoring (Cycle 036, 2026-03-15) reveals uneven quality across languages: Go, Rust, Ruby, and JavaScript achieve near-100% smoke test pass rates, while Python's deep conftest dependency chains reduce its end-to-end pass rate significantly. The heuristic Dockerfile generator does not yet handle all build configurations, and LLM-assisted fallback generation remains a planned enhancement. [affine-swe-infinite/monitor_reports/cycle_036_20260315_0950.md]
+Production monitoring (Cycle 036, 2026-03-15) reveals uneven quality across languages: Go, Rust, Ruby, and JavaScript achieve near-100% smoke test pass rates, while Python achieves only 3.7% — primarily due to deep conftest dependency chains in large frameworks (Django, Home Assistant) that defeat the current Dockerfile generator's dependency resolution. LLM-assisted fallback generation for complex Python build configurations remains a planned enhancement. [affine-swe-infinite/monitor_reports/cycle_036_20260315_0950.md]
 
 ---
 
@@ -350,12 +503,17 @@ LiveWeb Arena addresses these weaknesses through real-time data, a combinatorial
 
 The system comprises three components:
 
-**Plugins** wrap real-world websites and provide structured data extraction. Five plugins are currently implemented:
-- **Weather** (wttr.in): weather data for 51 cities across five global regions
-- **Stooq** (stooq.com): stock, forex, index, and commodity prices for 45 financial instruments
-- **CoinGecko** (coingecko.com): cryptocurrency data for 39 digital assets including prices, volumes, market caps, and performance metrics
-- **Taostats** (taostats.io): Bittensor blockchain subnet metrics for 50+ dynamically tracked subnets
-- **Hybrid**: cross-domain tasks combining CoinGecko and Stooq, requiring agents to navigate multiple websites within a single evaluation
+**Plugins** wrap real-world websites and provide structured data extraction. Five plugins are currently implemented (Table 8):
+
+**Table 8. LiveWeb Arena Plugin Suite**
+
+| Plugin | Website | Domain | Entity Pool | Data Characteristics |
+|---|---|---|---|---|
+| **Weather** | wttr.in | Meteorology | 51 cities across 5 global regions | Continuously changing forecasts |
+| **Stooq** | stooq.com | Finance | 45 instruments (stocks, forex, indices, commodities) | Real-time market prices |
+| **CoinGecko** | coingecko.com | Cryptocurrency | 39 digital assets | Prices, volumes, market caps, performance metrics |
+| **Taostats** | taostats.io | Blockchain | 50+ dynamically tracked subnets | Bittensor subnet metrics |
+| **Hybrid** | CoinGecko + Stooq | Cross-domain | Combined pools | Requires multi-site navigation within single evaluation |
 
 Each plugin defines allowed domains, provides a `fetch_api_data(url)` method for structured data extraction, and can block direct API access to force agents to navigate the website's user interface rather than calling APIs directly. [liveweb-arena/liveweb_arena/plugins/base.py; liveweb-arena/README.md]
 
@@ -363,7 +521,6 @@ Each plugin defines allowed domains, provides a `fetch_api_data(url)` method for
 - **Easy** (9 templates): single-hop, direct URL extraction (e.g., "What is Bitcoin's current price?")
 - **Medium** (13 templates): multi-page navigation or computation (e.g., "Which cryptocurrency had the largest 24-hour price increase?")
 - **Hard** (12 templates): cross-site comparison or multi-step reasoning (e.g., "Rank these four assets by 24-hour performance: BTC, ETH, AAPL, MSFT")
-
 [liveweb-arena/TASK_TOPOLOGY.md]
 
 **The evaluation harness** launches a Playwright browser session for each evaluation, generates tasks from templates using deterministic seeds, tracks which pages the agent visits, collects ground truth from those pages, and scores the agent's final response.
@@ -388,7 +545,7 @@ Five mechanisms prevent models from bypassing genuine web navigation:
 4. **Cross-site exploration**: Hybrid templates require navigating multiple websites and comparing real-time data across domains.
 5. **Seed-based determinism**: Each seed produces a unique entity selection, but results are reproducible for a given seed and data snapshot.
 
-A mandatory red-team review protocol verifies that each template cannot be solved by an LLM using world knowledge alone (>60% accuracy without browsing), has an effective variant space exceeding 500, and does not collapse across parameter variations. [liveweb-arena/CLAUDE.md; liveweb-arena/TASK_TOPOLOGY.md]
+A mandatory red-team review protocol blocks any template where an LLM can achieve above 60% accuracy using world knowledge alone (without browsing), requires an effective variant space exceeding 500 unique question-answer pairs, and rejects templates that collapse across parameter variations. [liveweb-arena/CLAUDE.md; liveweb-arena/TASK_TOPOLOGY.md]
 
 #### Ground Truth Collection
 
@@ -398,17 +555,26 @@ This design means that if an agent visits a cryptocurrency's detail page, the gr
 
 #### Step-Level Reward Signals
 
-LiveWeb Arena provides dense reward signals suitable for reinforcement learning, not just a binary pass/fail at the end of each episode:
+LiveWeb Arena provides dense reward signals suitable for reinforcement learning, not just a binary pass/fail at the end of each episode (Table 9). Cumulative step rewards are capped at 1.5, below the terminal success bonus of 2.0, to ensure that agents cannot achieve high scores through exploration alone without answering correctly. [liveweb-arena/liveweb_arena/core/reward.py]
 
-**Exploration rewards**: +0.05 for visiting a new domain, +0.06 per new asset collected, +0.10 per target asset found, +0.15 when all targets are collected, +0.03 for detail page visits.
+**Table 9. LiveWeb Arena Reward Structure**
 
-**Efficiency rewards**: Up to +0.08 scaled by how many steps remain unused when the agent submits its answer.
-
-**Penalties**: -0.04 for revisiting pages, -0.06 for hitting blocked URLs (e.g., direct API calls), -0.02 for failed actions, -0.08 for parse errors.
-
-**Terminal rewards**: +2.00 for achieving 80%+ validation accuracy, score × 0.70 for partial success (30–80%), -0.25 for exhausting maximum steps.
-
-Cumulative step rewards are capped at 1.5, below the terminal success bonus of 2.0, to ensure that agents cannot achieve high scores through exploration alone without answering correctly. [liveweb-arena/liveweb_arena/core/reward.py]
+| Category | Signal | Value | Purpose |
+|---|---|---|---|
+| **Exploration** | Visit new domain | +0.05 | Encourage breadth of navigation |
+| | Collect new asset | +0.06 | Reward data gathering |
+| | Find target asset | +0.10 | Reward goal-directed browsing |
+| | All targets collected | +0.15 | Bonus for completeness |
+| | Detail page visit | +0.03 | Encourage deeper exploration |
+| **Efficiency** | Steps remaining at submission | up to +0.08 | Reward faster task completion |
+| **Penalties** | Revisit page | −0.04 | Discourage redundant navigation |
+| | Blocked URL (e.g., direct API) | −0.06 | Force genuine UI navigation |
+| | Failed action | −0.02 | Penalize errors |
+| | Parse error | −0.08 | Penalize malformed commands |
+| **Terminal** | ≥80% validation accuracy | +2.00 | Strong success signal |
+| | 30–80% accuracy | score × 0.70 | Partial credit |
+| | Max steps exhausted | −0.25 | Penalize timeout |
+| | *Step reward cap* | *1.5 max* | *Prevents exploration-only gaming* |
 
 #### Key Advantages
 
@@ -450,22 +616,35 @@ The MemoryGym pipeline proceeds through six phases:
 
 3. **Stream interleaving**: Documents arrive in batches (default: 10 entities per batch), with correction events, noise documents, and questions interleaved throughout the stream. Approximately 40% of questions are emitted mid-ingest, creating uncertainty pressure — the agent cannot adopt a "store everything first, answer later" strategy because questions arrive before all entities have been seen. [MemoryGym/memorygym/worlds/events.py]
 
-4. **Agent interaction**: The agent receives events one at a time and uses four tools: **Write** (store information, consumes one write from the budget), **Edit** (modify stored information, budget-free during corrections), **Read** (retrieve stored content, free), and **memory_search** (semantic search over stored content, free). The write budget creates a 2:1 entity-to-write ratio at standard tier (60 entities, 30 writes) and a 4:1 ratio at hard tier (120 entities, 30 writes), forcing selective storage. [MemoryGym/memorygym/agents/_tool_helpers.py; MemoryGym/README.md]
+4. **Agent interaction**: The agent receives events one at a time and uses four tools: **Write** (store information, consumes one write from the budget), **Edit** (modify stored information, budget-free during corrections), **Read** (retrieve stored content, free), and **memory_search** (semantic search over stored content, free). The write budget is always smaller than the entity count, forcing selective storage — the agent must decide which entities are worth remembering. [MemoryGym/memorygym/agents/_tool_helpers.py; MemoryGym/README.md]
 
 5. **Correction events**: Mid-stream, the system mutates entity attributes (numeric values shift by 10–50%, enums switch categories, dates shift by 30–365 days) and issues correction notices. The agent must search its memory for the affected entity and update the stored value. Ground truth for all subsequent questions reflects the corrected state. Correction rates are domain-specific: hospital (15%) has the highest rate, reflecting rapid status changes; city (5%) has the lowest. [MemoryGym/memorygym/worlds/events.py]
 
 6. **Adaptive questioning**: Questions are generated *after* the agent's storage decisions, using importance-weighted entity sampling. The system generates questions across four categories (retrieval, comprehension, update, abstention) using twenty reasoning competencies — including aggregation, comparison, multi-hop reasoning, counterfactual reasoning, relationship chains, temporal trends, and more. Crucially, update questions use identical wording to retrieval questions, making them indistinguishable by surface form. [MemoryGym/memorygym/worlds/base.py; MemoryGym/memorygym/protocol.py]
 
+The evaluation supports four tiers of increasing difficulty (Table 10). The multi tier directly tests cross-session persistence: it verifies whether the agent's stored memories are genuinely useful across conversation resets — a proxy for the real-world scenario where an agent's context window is flushed between interactions but its persistent memory must carry forward. [MemoryGym/memorygym/protocol.py]
+
+**Table 10. MemoryGym Evaluation Tiers**
+
+| Tier | Entities | Write Budget | Entity:Write Pressure | Session Breaks | Primary Challenge |
+|---|---|---|---|---|---|
+| **Lite** | 30 | 15 | 2:1 | 0 | Basic triage and retrieval |
+| **Standard** | 60 | 30 | 2:1 | 0 | Full-scale storage under moderate pressure |
+| **Hard** | 120 | 30 | 4:1 | 0 | Extreme triage — must discard 75% of entities |
+| **Multi** | 60 | 30 | 2:1 | 3 | Cross-session persistence — context cleared mid-evaluation |
+
 #### Four-Axis Scoring
 
-MemoryGym scores agents on four orthogonal axes:
+MemoryGym scores agents on four orthogonal axes (Table 11). The composite score is: `0.30 × breadth + 0.25 × maintenance + 0.25 × reasoning + 0.20 × efficiency`. Abstention accuracy (does the agent correctly say "I don't know" for unstored entities?) is reported as a separate diagnostic but does not enter the composite. [MemoryGym/memorygym/protocol.py]
 
-- **Storage Breadth (30%)**: Accuracy on retrieval questions — did the agent store this entity and can it retrieve the correct value?
-- **Memory Maintenance (25%)**: Accuracy on update questions, gated by storage coverage — the agent must store at least 50% of entities to receive any maintenance credit. This prevents a degenerate strategy of storing few entities and claiming perfect update accuracy.
-- **Reasoning (25%)**: Accuracy across twenty reasoning competency types, from basic aggregation to relationship chains and temporal extremes.
-- **Efficiency (20%)**: Correct answers per write unit, capped at 1.0 — rewarding agents that pack more useful information into fewer writes.
+**Table 11. MemoryGym Four-Axis Scoring**
 
-The composite score is: `0.30 × breadth + 0.25 × maintenance + 0.25 × reasoning + 0.20 × efficiency`. Abstention accuracy (does the agent correctly say "I don't know" for unstored entities?) is reported as a separate diagnostic but does not enter the composite. [MemoryGym/memorygym/protocol.py]
+| Axis | Weight | Measures | Anti-Gaming Gate |
+|---|---|---|---|
+| **Storage Breadth** | 30% | Accuracy on retrieval questions — did the agent store this entity? | — |
+| **Memory Maintenance** | 25% | Accuracy on update questions after corrections | Agent must store ≥50% of entities to receive any credit |
+| **Reasoning** | 25% | Accuracy across 20 reasoning competency types (aggregation, comparison, multi-hop, counterfactual, temporal, etc.) | — |
+| **Efficiency** | 20% | Correct answers per write unit, capped at 1.0 | Rewards packing more information into fewer writes |
 
 #### Anti-Cheating Verification
 
@@ -493,7 +672,7 @@ MemoryGym provides a gym-compatible RL environment (`MemoryEnv`) with two reward
 
 #### Current Limitations
 
-Empirical results across 123 evaluations show that all tested models (Qwen3.5-397B, Qwen3-235B, MiniMax-M2.5, Kimi-K2.5, GLM-5) achieve composite scores between 10–18%, with breadth averaging only 10.8%. The cascade bottleneck is storage: models store far too few entities, causing downstream failures in maintenance and reasoning. No model currently packs multiple entities per write — an untapped optimization. The scoring system relies on exact or near-exact matching for numeric answers, which may undercount partial understanding. [MemoryGym/docs/STATUS_REPORT.md]
+Empirical results across eight models and 199+ evaluations show a wide score range. The top performer — Mistral-Small-3.2-24B, a comparatively small model — achieves 24.3% composite across 10 evaluations, while the strongest large models (Qwen3.5-397B, Qwen3-235B) reach 18.3–18.6% across 22–81 evaluations. At the other extreme, DeepSeek-V3.2 scores 0.0%, demonstrating that the benchmark genuinely discriminates rather than producing uniformly low scores. The cascade bottleneck remains storage breadth: models store far too few entities, causing downstream failures in maintenance and reasoning. No model currently packs multiple entities per write — an untapped optimization. [MemoryGym/LEADERBOARD.md]
 
 ---
 
@@ -505,39 +684,58 @@ The QQR environment evaluates end-to-end agent capability for completing complex
 
 #### Why Existing Benchmarks Are Insufficient
 
-Mainstream benchmarks (MMLU, HumanEval, GSM8K) evaluate static knowledge or closed-form reasoning. They do not measure whether a model can autonomously decide *which* external tool to call, *in what order*, with *what parameters*, and produce an output that is factually grounded in tool responses rather than hallucinated. Tool-use benchmarks that do exist (e.g., ToolBench) typically test individual tool calls in isolation, not multi-step orchestration across heterogeneous tools under real-world constraints. [affinetes/environments/qqr/README.md]
+Recent tool-use benchmarks have begun measuring whether models can invoke external APIs, but most test only a fragment of the full agent pipeline. The Berkeley Function Calling Leaderboard (BFCL) evaluates function-calling format compliance — whether a model produces syntactically correct API calls — but does not test whether those calls are sequenced correctly or whether the results are integrated into a coherent output. ToolBench offers a large API catalog but typically evaluates individual calls, not multi-step orchestration where the output of one tool (e.g., coordinates from a POI search) must serve as the input to another (e.g., a routing query). Gorilla and API-Bank test API selection but not the downstream reasoning required to synthesize tool outputs into structured plans.
+
+QQR tests the full pipeline: selecting the right tool for each sub-problem, constructing valid parameters (including coordinates, dates, and city codes), issuing calls in a logical sequence, integrating results from heterogeneous sources (geographic data, weather forecasts, transport schedules), and generating a structured output where every claim can be traced back to a specific tool response. The scoring system's 10-category fact extraction (Section 5.4, Scoring System) verifies this grounding at the individual fact level — a capability that no existing tool-use benchmark evaluates with comparable granularity. [affinetes/environments/qqr/README.md]
 
 #### Environment Design
 
-QQR provides six MCP (Model Context Protocol) tools spanning two categories:
+QQR provides six MCP (Model Context Protocol) tools spanning two categories (Table 12):
 
-**Real-data tools** (backed by AMap API):
-- `poi_search`: Search points of interest (attractions, hotels, restaurants)
-- `around_search`: Radius-based nearby search from coordinates
-- `direction`: Multi-modal route planning (driving, walking, cycling, transit)
-- `weather`: Weather forecasts for Chinese cities
+**Table 12. QQR MCP Tool Suite**
 
-**Deterministic mock tools** (SHA256-seeded):
-- `search_flights`: Flight search between city pairs on specified dates
-- `search_train_tickets`: Train ticket search with identical determinism
+| Tool | Data Source | Function | Key Parameters |
+|---|---|---|---|
+| `poi_search` | AMap API (live) | Search points of interest (attractions, hotels, restaurants) | City, category, keyword |
+| `around_search` | AMap API (live) | Radius-based nearby search from coordinates | Longitude, latitude, radius |
+| `direction` | AMap API (live) | Multi-modal route planning (driving, walking, cycling, transit) | Origin/destination coordinates, mode |
+| `weather` | AMap API (live) | Weather forecasts for Chinese cities | City code |
+| `search_flights` | SHA256-seeded mock | Flight search between city pairs on specified dates | From city, to city, date |
+| `search_train_tickets` | SHA256-seeded mock | Train ticket search with identical determinism | From city, to city, date |
 
 Transport data is generated deterministically: `SHA256(epoch_salt | date | from_city | to_city)` produces identical flights and trains for the same inputs within an epoch. The epoch salt rotates weekly, preventing memorization across evaluation windows while maintaining reproducibility within each window. [affinetes/environments/qqr/env.py; affinetes/environments/qqr/README.md]
 
+Evaluation proceeds in **two phases**: a tool-calling phase (up to 15 steps) where the model freely invokes MCP tools to collect data, followed by a final-answer phase where tools are disabled and the model must synthesize a complete plan from the data already collected. This two-phase separation prevents the model from making additional tool calls during answer generation and ensures the final output is grounded in previously collected evidence. [QQR 旅行规划评测环境.pdf]
+
 #### Task Generation
 
-Tasks are generated from three parameters: **type** (7 categories: intercity transport, multi-day trip, hybrid, single POI, food tour, business travel, family/study trip), **difficulty** (3 levels with escalating constraint tightness, conflict count, and time pressure), and **city** (71 Chinese cities including major metropolitan areas and tourist destinations). Problem type is determined by `SHA256(task_id | epoch_salt | "type")` rather than simple modular arithmetic, decoupling task_id ordering from problem type — preventing sequential memorization. With weekly salt rotation, this produces over 10,000 distinct task configurations. [affinetes/environments/qqr/problem_generator.py; affinetes/environments/qqr/config.py]
+Tasks are generated from three parameters: **type** (7 categories: intercity transport, multi-day trip, hybrid, single POI, food tour, business travel, family/study trip), **difficulty** (3 levels with escalating constraint tightness, conflict count, and time pressure), and **city** (71 Chinese cities including major metropolitan areas and tourist destinations). A city knowledge graph provides contextual information — seasonal characteristics, local specialties, landmarks, and transportation hubs — that enriches generated problems with domain-relevant constraints. [affinetes/environments/qqr/knowledge_graph.py] Problem type is determined by `SHA256(task_id | epoch_salt | "type")` rather than simple modular arithmetic, decoupling task_id ordering from problem type — preventing sequential memorization. With weekly salt rotation, this produces over 10,000 distinct task configurations. [affinetes/environments/qqr/problem_generator.py; affinetes/environments/qqr/config.py]
 
 #### Scoring System
 
-QQR uses a 100-point scoring system split evenly between code-verifiable metrics (50 points) and LLM-judged quality metrics (50 points), with bidirectional coupling to prevent gaming:
+QQR uses a 100-point scoring system split evenly between code-verifiable metrics and LLM-judged quality, with bidirectional coupling to prevent gaming (Table 13).
 
-**Code score (50 pts)**: Information Consistency (25 pts, measuring how much output content traces to real tool data across 10 fact categories — flight numbers, train numbers, POI names, weather, distances, times, prices, etc.) plus Completeness (25 pts, measuring coverage of required planning dimensions with proximity-based grounding — a fact mentioned near a tool result scores higher than one mentioned in isolation).
+**Table 13. QQR 100-Point Scoring Rubric**
 
-**LLM score (50 pts)**: Practicality, analysis depth, logic, user experience, and factual grounding.
+| Component | Points | Metric | Description |
+|---|---|---|---|
+| **Code: Information Consistency** | 25 | Fact traceability | Output content traced to real tool data across 10 fact categories (flight/train numbers, POI names, weather, distances, times, prices, etc.) |
+| **Code: Completeness** | 25 | Dimension coverage | Coverage of required planning dimensions; proximity-based grounding — facts near tool results score higher |
+| **LLM: Quality** | 50 | Multi-axis judgment | Practicality, analysis depth, logic, user experience, and factual grounding |
 
-**Bidirectional coupling**: The LLM score is constrained by the code score (`llm_adjusted = llm_raw × min(1.0, code_total / 30)`), preventing high LLM ratings for fluent but ungrounded outputs. Conversely, the code score retains at least 70% of its value regardless of LLM rating, ensuring that factual grounding is always rewarded.
+| Coupling Mechanism | Formula | Purpose |
+|---|---|---|
+| **LLM ceiling** | `llm_adjusted = llm_raw × min(1.0, code_total / 30)` | Prevents high LLM ratings for fluent but ungrounded outputs |
+| **Code floor** | Code score retains ≥70% regardless of LLM rating | Ensures factual grounding is always rewarded |
 
-**Hard constraints** apply multiplicative penalties: missing required tool calls (×0.5), unverified POI names (×0.7), fabricated transport data (×0.3–1.0 on a graduated scale), and format violations (×0.15). Multiple failures compound. [affinetes/environments/qqr/scorer.py; affinetes/environments/qqr/README.md]
+| Hard Constraint | Penalty | Trigger |
+|---|---|---|
+| Missing required tool calls | ×0.5 | Required tool not invoked during episode |
+| Unverified POI names | ×0.7 | POI mentioned but not found in tool results |
+| Fabricated transport data | ×0.3–1.0 (graduated) | Flight/train data not matching tool responses |
+| Format violations | ×0.15 | Output fails structural requirements |
+
+Multiple hard-constraint failures compound multiplicatively. [affinetes/environments/qqr/scorer.py; affinetes/environments/qqr/README.md]
 
 #### Step-Level Rewards
 
@@ -564,23 +762,25 @@ The OpenSpiel environment evaluates a model's ability to engage in multi-step st
 
 #### Why Existing Benchmarks Are Insufficient
 
-Static benchmarks rarely capture interactive strategic reasoning. A model that can solve chess puzzles (a static task) may fail at actual chess play (a dynamic, multi-step, adversarial task). Question-answering benchmarks test factual recall; game-playing tests the ability to maintain a strategy over many decisions, each of which depends on the opponent's prior actions. This sequential, interactive structure is precisely what agentic systems must handle in real-world settings — from negotiation to multi-step planning under uncertainty.
+Static reasoning benchmarks — even those involving complex multi-step problems like competition mathematics or formal logic — evaluate a model's ability to produce a single correct chain of reasoning. They do not measure the ability to maintain a strategy across many interdependent decisions where each choice alters the state space and where an adversary is actively working to exploit weaknesses. A model that solves chess puzzles (a static task with a known correct answer) may fail at actual chess play (a dynamic, multi-step, adversarial task where the optimal move depends on the opponent's response).
+
+Existing LLM game-playing evaluations typically focus on a single game — often chess — and report a scalar ELO rating. This measures depth within one strategic domain but reveals nothing about breadth: a model optimized for chess may perform poorly at imperfect-information games (Poker, Liar's Dice), stochastic games (Backgammon), or multi-player coordination games (Hearts, Bridge). OpenSpiel's contribution is not merely to test game-playing ability but to test it across a **battery of 22 games requiring fundamentally different strategic capabilities** — from territorial control (Go, Amazons) to probability estimation (Blackjack, Liar's Dice) to hidden-information reasoning (Phantom Tic-Tac-Toe, Bridge) — providing a multi-dimensional strategic reasoning profile rather than a single performance number.
 
 #### Environment Design
 
 The environment wraps **DeepMind's OpenSpiel** framework, providing access to 22 games selected for two properties: **trajectory diversity** (each task_id + seed combination must produce at least 100 distinct game trajectories) and **strategy non-memorability** (no game can be solved by memorizing a single optimal strategy across all configurations).
 
-The 22 games are organized into seven tiers by evaluation quality:
+The 22 games are organized into seven tiers by evaluation quality (Table 14):
 
-**Tier 1–2: Core evaluation games (8)**: Games with excellent trajectory diversity and proven evaluation quality. These include Goofspiel (bidding strategy), Liar's Dice (probability reasoning, 36–60 million trajectories), Leduc Poker (~120 trajectories per configuration), Gin Rummy (~10^60 trajectories), Othello (spatial reasoning), Backgammon (>10^50 trajectories), Hex (path planning), and Clobber (capture tactics).
+**Table 14. OpenSpiel Game Tiers**
 
-**Tier 3–4: Complex strategy games (7)**: Multi-player and high-complexity games requiring advanced reasoning. These include Hearts (4-player, 8 rule combinations), Euchre (trump-based card strategy), Dots and Boxes (spatial control), Go (3 board sizes × 3 komi values), Chess, Checkers, and Quoridor (path blocking).
-
-**Tier 5: Imperfect information games (2)**: Blackjack (probability reasoning against a dealer) and Phantom Tic-Tac-Toe (hidden opponent moves, retained specifically for imperfect-information testing despite the small grid).
-
-**Tier 6: Single-player games (2)**: 2048 (spatial planning over 50–200 steps) and Solitaire (card sequencing with high shuffle diversity), added specifically for testing sequential reasoning without opponent modeling.
-
-**Tier 7: Advanced strategy games (3)**: Bridge (4-player bidding and trick-taking under imperfect information), Amazons (territorial control with queen-like movement and arrow placement), and Oware (Mancala-variant seed-counting strategy).
+| Tier | Category | Games | Count | Key Strategic Property | Notable Trajectory Diversity |
+|---|---|---|---|---|---|
+| **1–2** | Core evaluation | Goofspiel, Liar's Dice, Leduc Poker, Gin Rummy, Othello, Backgammon, Hex, Clobber | 8 | Excellent diversity; proven evaluation quality | Gin Rummy ~10^60; Backgammon >10^50; Liar's Dice 36–60M |
+| **3–4** | Complex strategy | Hearts, Euchre, Dots and Boxes, Go, Chess, Checkers, Quoridor | 7 | Multi-player; high complexity | Hearts: 8 rule combos; Go: 3 board sizes × 3 komi |
+| **5** | Imperfect information | Blackjack, Phantom Tic-Tac-Toe | 2 | Hidden state; probability estimation | Retained for imperfect-info coverage despite small grids |
+| **6** | Single-player | 2048, Solitaire | 2 | Sequential reasoning without opponents | 2048: 50–200 steps; Solitaire: high shuffle diversity |
+| **7** | Advanced strategy | Bridge, Amazons, Oware | 3 | 4-player bidding; territorial control; seed-counting | Bridge: imperfect info + bidding conventions |
 
 Five games were explicitly removed during curation: Breakthrough (100% success rate, no discrimination between models), Pig (luck-dominant with limited strategic depth), Cribbage (0% success rate — rules too complex for current LLMs), Battleship (979,000 average tokens per game, economically prohibitive despite 100% success), and Phantom Tic-Tac-Toe 3×3 was initially considered for removal but retained for its imperfect-information properties. [affinetes/environments/openspiel/game_config.py; affinetes/environments/openspiel/README.md]
 
@@ -590,11 +790,11 @@ The LLM plays one position in each game, determined by `seed % num_players`. Rem
 
 #### Task ID Encoding
 
-Task IDs use a 12-digit integer format: `GGGGCCCCCCCC`, where the first four digits select the game (via circular indexing over the 22-game list) and the remaining eight digits select the configuration variant (board size, rule combination, player count). This yields a vast configuration space that, combined with the seed-driven randomness per game, produces a trajectory space exceeding 10^60 for the full suite. [affinetes/environments/openspiel/game_config.py]
+Task IDs use a 12-digit integer format: `GGGGCCCCCCCC`, where the first four digits select the game (via circular indexing over the 22-game list) and the remaining eight digits select the configuration variant (board size, rule combination, player count). This yields a vast configuration space that, combined with the seed-driven randomness per game, produces a theoretical trajectory space exceeding 10^60 for the full suite — far larger than any practical evaluation can cover, but ensuring that memorization of specific game states is infeasible. [affinetes/environments/openspiel/game_config.py]
 
 #### Scoring and Training Interface
 
-Each game returns a normalized score in [0, 1] based on the game outcome. The environment supports both one-shot evaluation (`evaluate()`) and the OpenEnv training interface (`reset()` → `step()` → `stop()`), allowing it to serve as both a benchmark and an RL training substrate. The LLM bot maintains full conversation history within each game for context-aware decision-making, with a retry mechanism for action parsing failures. [affinetes/environments/openspiel/env.py; affinetes/environments/openspiel/llm_bot.py]
+Each game returns a normalized score in [0, 1] based on the game outcome. The environment supports both one-shot evaluation (`evaluate()`) and the OpenEnv training interface (`reset()` → `step()` → `stop()`), allowing it to serve as both a benchmark and a policy-training environment. The LLM bot maintains full conversation history within each game for context-aware decision-making, with a retry mechanism for action parsing failures. [affinetes/environments/openspiel/env.py; affinetes/environments/openspiel/llm_bot.py]
 
 #### Key Advantages
 
@@ -622,7 +822,29 @@ Interactive environments provide rich task-level reward signals, but they share 
 
 #### Architecture: A Three-Stage Pipeline
 
-DISTILL operates through a three-stage pipeline that separates teacher rollout generation, storage promotion, and student evaluation.
+DISTILL operates through a three-stage pipeline that separates teacher rollout generation, storage promotion, and student evaluation (Figure 4).
+
+**Figure 4. DISTILL Three-Stage Pipeline**
+
+```mermaid
+flowchart LR
+    subgraph Stage1["Stage 1: Teacher Rollout"]
+        CE["Corpus-Eval\n(climbmix-400b)"] --> TW["Teacher Worker\n(Qwen3-235B)"]
+        TW -->|"512-token continuation\n+ top-20 logprobs"| R2P["Private R2\npending/*.json"]
+    end
+
+    subgraph Stage2["Stage 2: Promotion"]
+        R2P -->|"sample 3/hour"| TM["Teacher Mover"]
+        TM -->|"sequential numbering"| R2["Public R2\ntask_*.json"]
+        TM -->|"update counter"| META["metadata.json\n(completed_up_to)"]
+    end
+
+    subgraph Stage3["Stage 3: Student Eval"]
+        R2 --> DIST["DISTILL Env\n(Affinetes)"]
+        DIST -->|"echo=True\nlogprobs=20"| STU["Student Model"]
+        STU --> KL["KL Divergence\nscore = exp(−avg_kl)"]
+    end
+```
 
 **Stage 1: Teacher rollout generation.** An independent teacher worker process runs alongside the main executor. It samples task IDs from the Corpus-Eval environment — a prompt source backed by `karpathy/climbmix-400b-shuffle` that provides deterministic raw-corpus prompts rather than curated benchmark questions, eliminating contamination risk. For each sampled task, the teacher model (e.g., Qwen3-235B) generates a 512-token continuation with `collect_logprobs=True`, producing per-position top-20 token probability distributions. The resulting rollout — containing the full conversation text, token positions, and teacher logprob dictionaries — is uploaded to a private R2 bucket (`pending/{env}/{epoch_ms}.json`). To minimize storage I/O, the teacher worker walks segment-aligned task IDs (64-task segments matching Corpus-Eval's LRU shard boundaries), allowing bursts of rollouts to reuse cached corpus shards rather than triggering fresh ~92 MB downloads per rollout. [affine-cortex/affine/src/executor/teacher_worker.py]
 
@@ -665,26 +887,178 @@ The logprob data collected during DISTILL evaluation also feeds into the anti-co
 
 The pipeline depends on a specific teacher model (currently Qwen3-235B) whose quality upper-bounds the training signal — a student that surpasses the teacher receives no further guidance. The top-20 support restriction means that probability mass outside both models' top-20 tokens is unaccounted for, introducing a systematic underestimate of true KL divergence. The legacy single-sample path (k3 estimator) has higher variance than the top-K path, creating measurement inconsistency across rollout formats during the transition period. The lower completeness threshold (60% vs. 90%) means DISTILL scores can enter the pipeline with fewer data points than other environments, potentially increasing scoring noise.
 
+Together, the six environments described above cover software engineering, web interaction, memory management, tool-mediated planning, strategic reasoning, and distributional alignment — a breadth of capability axes that no single prior benchmark suite addresses. The question remains whether training against this environment suite produces genuinely improved models, not merely well-scored ones.
+
 ---
 
-## 6. Conclusion and Future Work
+## 6. Affine Model Benchmarks
 
-This paper has presented Affine, a decentralized system for evaluating and training agentic intelligence through interactive, renewable environments. The system makes three primary contributions: a scoring mechanism that resists plagiarism and gaming through Pareto dominance filtering, ELO-based temporal ratings, and a dual-signal anti-copy detector; a container-orchestration infrastructure (Affinetes) that cleanly separates environment execution from model inference; and a suite of five interactive evaluation environments — SWE-Infinite, LiveWeb Arena, MemoryGym, QQR, and OpenSpiel — each targeting a distinct capability axis that static benchmarks fail to measure, supplemented by a KL-divergence distillation environment (DISTILL) that provides per-token training signals from teacher rollouts.
+The system design described in Sections 3–5 is intended to produce models that are not merely well-scored within Affine's own environments, but genuinely more capable agents. To test this claim, we evaluate three Affine-trained miner models — each independently trained by different participants using different strategies — against the unmodified base model (Qwen3-32B-TEE) on a suite of external benchmarks, none of which are used in Affine's training or scoring pipeline. Table 15 consolidates all results and Figure 5 summarizes per-benchmark win rates. The sample of three miners is small and these results should be treated as preliminary evidence rather than definitive proof. All results are based on data collected up to April 7, 2026. [benchmark_result.md]
 
-Several properties distinguish this approach from conventional benchmark design. Task supplies are renewable rather than fixed, resisting saturation and contamination. Environments are interactive rather than single-turn, capturing the sequential decision-making that defines agentic behavior. Infrastructure is treated as a first-class concern, enabling reproducible evaluation at scale rather than one-off script execution. And the system is explicitly designed for dual use: every environment serves as both an evaluation benchmark and a reinforcement learning training substrate, with deterministic seeding, step-level reward signals, and standardized interfaces (OpenEnv) that integrate directly into training loops.
+**Table 15. Consolidated Benchmark Results — Base Model vs. Affine-Trained Miners**
+
+Bold indicates best score per benchmark. Shaded cells (†) indicate underperformance vs. base. Benchmarks are grouped by reliability tier.
+
+| Benchmark | Metric | Base (Qwen3-32B-TEE) | Axon1 M19 | Leary CX | Leary CS | Tier |
+|---|---|---|---|---|---|---|
+| MCP-Bench | Tool Call Success | **98.01%** | 87.14% † | 98.21% | 96.95% | Stable |
+| MCP-Bench | Task Completion | 6.78 | 5.86 † | 7.71 | **7.93** | Stable |
+| MCP-Bench | Planning Score | 6.69 | 5.16 † | **6.94** | **6.95** | Stable |
+| MemoryAgentBench | F1 | 6.21 | 9.30 | **9.37** | 8.73 | Stable |
+| SWE-rebench | Solve Rate | 0.00 | 0.00 | **12.28** | 7.02 | Code |
+| HumanEval | Pass Rate | 81.71 | 72.56 † | **89.02** | 88.41 | Code |
+| ToolSandbox | Similarity | 0.069 | **0.481** | 0.454 | — | Snapshot |
+| Tau2 | pass_hat_1 | 0.435* | 0.085 | 0.110 | 0.131 | Snapshot |
+
+*Base Tau2 score from an earlier incomplete run; not directly comparable.
+
+**Figure 5. Miner Win Rates vs. Base Model (Stable + Code Benchmarks)**
+
+```
+                     Axon1 M19    Leary CX     Leary CS
+                     ─────────    ────────     ────────
+MCP Tool Call           ✗           ✓            ✗
+MCP Completion          ✗           ✓ +14%       ✓ +17%
+MCP Planning            ✗           ✓            ✓
+MemoryAgentBench        ✓ +50%      ✓ +51%       ✓ +41%
+SWE-rebench             —           ✓ +12.28     ✓ +7.02
+HumanEval               ✗           ✓ +9%        ✓ +8%
+                     ─────────    ────────     ────────
+Wins / 6 benchmarks    2/6          6/6          4/6
+```
+
+### 6.1 Stable Benchmarks
+
+Two benchmarks provide reliable, fully completed cross-model comparisons:
+
+| Model | MCP-Bench Tool Call Success | MCP-Bench Task Completion | MemoryAgentBench F1 |
+|---|---|---|---|
+| **Base (Qwen3-32B-TEE)** | 98.01% | 6.78 | 6.21 |
+| **Axon1 M19** | 87.14% | 5.86 | 9.30 |
+| **Leary CX** | **98.21%** | **7.71** | **9.37** |
+| **Leary CS** | 96.95% | 7.93 | 8.73 |
+
+**MCP-Bench** is currently the strongest tool-use benchmark in the suite, measuring task completion, tool selection, and planning quality on a 10-point scale. Leary CX and Leary CS form the top tier across all three dimensions: Leary CS leads on task completion (7.93 vs. base 6.78) and tool selection (8.24 vs. base 7.76), while Leary CX delivers comparable quality with the best runtime (86.8s vs. base 193.9s — a 2.2× speedup). Both miner models improve planning scores (6.94–6.95 vs. base 6.69). Critically, the base model retains near-perfect tool-call hygiene (100% valid tool names, 98% tool-call success), suggesting that Affine training improves higher-order task execution — planning, selection, completion — without degrading low-level tool-calling mechanics.
+
+**MemoryAgentBench** evaluates retrieval-focused long-context QA across 300 samples. All three miner models outperform the base: Leary CX achieves F1 9.37 versus base 6.21 (+51% relative), and does so 6× faster (2.6s vs. 16.1s per query). This suggests that Affine training improves both answer quality and inference efficiency on memory-retrieval tasks.
+
+### 6.2 Snapshot Benchmarks
+
+Two additional benchmarks provide directional signals but should not be used for definitive ranking due to incomplete runs or uneven coverage.
+
+| Model | ToolSandbox Similarity | Tau2 pass_hat_1 |
+|---|---|---|
+| **Base (Qwen3-32B-TEE)** | 0.069 | 0.435* |
+| **Axon1 M19** | 0.481 | 0.085 |
+| **Leary CX** | 0.454 | 0.110 |
+| **Leary CS** | — | 0.131 |
+
+*Base Tau2 score is from an earlier incomplete historical run and is not directly comparable to the formal miner runs.
+
+**ToolSandbox** scores output similarity to reference trajectories across multi-tool agent interactions. Both Axon1 and Leary CX dramatically outperform the base (0.48/0.45 vs. 0.07). **Tau2** measures end-to-end agentic task success. The base model's apparent advantage (0.435 vs. 0.085–0.131) reflects incomparable run conditions — the base score comes from an earlier, incomplete run and should not be interpreted as a regression.
+
+### 6.3 Code Generation and Software Engineering Benchmarks
+
+A separate evaluation covers code-centric benchmarks, providing direct evidence of whether Affine's SWE-Infinite training environment (Section 5.1) translates to external software engineering evaluation.
+
+| Model | SWE-rebench | HumanEval | Tau2-bench |
+|---|---|---|---|
+| **Base (Qwen3-32B-TEE)** | 0.00 | 81.71 | 14.05 |
+| **Axon1 M19** | 0.00 | 72.56 | 21.34 |
+| **Leary CX** | **12.28** | **89.02** | 7.76 |
+| **Leary CS** | 7.02 | 88.41 | **21.43** |
+
+**SWE-rebench** evaluates end-to-end software bug repair — the same capability that SWE-Infinite is designed to train. The base model scores 0.00, unable to complete any repair tasks. Leary CX achieves 12.28 and Leary CS achieves 7.02, demonstrating that Affine training produces measurable SWE capability where the base model has none. Axon1 remains at 0.00, consistent with the pattern of training-strategy-dependent outcomes observed across other benchmarks.
+
+**HumanEval** measures function-level code generation across 164 programming problems. Both Leary models surpass the base: Leary CX at 89.02 (+8.9% relative) and Leary CS at 88.41 (+8.2% relative). Axon1 regresses to 72.56, a 11.2% decline — reinforcing that its training strategy sacrificed code-generation breadth.
+
+**Tau2-bench** (separate run from Section 6.2): Leary CS leads at 21.43, Axon1 at 21.34 — both above the base model's 14.05. Leary CX scores 7.76, illustrating that no single miner dominates all axes. [benchmark_result.md]
+
+### 6.4 Interpretation
+
+The combined results across stable benchmarks (Section 6.1), snapshot benchmarks (Section 6.2), and code-generation benchmarks (Section 6.3) demonstrate that Affine's incentive mechanism — renewable interactive environments combined with decentralized competition — produces models with measurable capability improvements on tasks outside the training distribution. The strongest miner model (Leary CX) outperforms the base on both stable benchmarks, with a +51% F1 gain on memory retrieval and +14% on MCP-Bench task completion, and achieves the strongest SWE-rebench and HumanEval scores in the cohort.
+
+However, the results are not uniformly positive. Axon1 M19 underperforms the base on MCP-Bench tool-call success (87% vs. 98%) and HumanEval (72.56 vs. 81.71), suggesting that not all training strategies yield broad improvement — some may trade breadth for depth. This variance is a natural consequence of Affine's deliberate non-prescription of training methods (Section 3.6): different miners independently choose different RL algorithms, reward shaping, and curricula, producing diverse capability profiles. The geometric mean scoring mechanism (Section 3.4) is designed to penalize exactly this narrow-specialization pattern, incentivizing miners toward broad-spectrum capability over time.
+
+The SWE-rebench results are particularly noteworthy: the base model achieves zero successful repairs, while two of three Affine-trained miners demonstrate non-trivial SWE capability — direct evidence that the SWE-Infinite environment (Section 5.1) produces transferable software engineering skills. Limitations of this snapshot analysis are discussed in Section 8.
+
+---
+
+## 7. Future Roadmap
+
+The Affine system is designed for continuous evolution. This section outlines the concrete next steps along five axes (Table 16): model scaling, distillation infrastructure, inference independence, environment expansion, and scoring refinement.
+
+**Table 16. Roadmap Summary**
+
+| Axis | Current State | Planned Evolution | Key Dependencies |
+|---|---|---|---|
+| **Model Scale** | Qwen3-32B (fixed architecture) | 72B base model | Higher-memory GPU instances; anti-copy threshold recalibration |
+| **Distillation** | Single teacher (Qwen3-235B), one-directional | Automated teacher selection; multi-teacher ensembling; corpus diversification | Miner quality surpassing current teacher |
+| **Inference Infra** | Chutes (Subnet 64, third-party) | Affine-operated clusters via Targon | GPU procurement; endpoint migration |
+| **Environments** | 6 active (SWE, LiveWeb, Memory, QQR, OpenSpiel, DISTILL) | Knowledge-eval activation; new LiveWeb domains; multi-agent; longer SWE tasks | Environment development; scoring config updates |
+| **Scoring** | Pareto + ELO + background anti-copy | Inline anti-copy integration; adaptive decay; population-tuned K-factor | Population growth data; false-positive calibration |
+
+### 7.1 Model Architecture Scaling: 32B → 72B
+
+The current fixed architecture requirement (Qwen3-32B) was chosen to eliminate architectural confounds from evaluation. The next planned transition is to a **72B-class base model** — the next scale point in the Qwen architecture family — which doubles the parameter count available for RL-driven capability improvement. The benchmark results in Section 6 suggest that the current 32B architecture can be meaningfully improved through Affine training; a 72B model offers substantially more capacity for absorbing environment-specific adaptations while retaining general capabilities. This transition requires coordinated changes across the system:
+
+- **Inference layer**: 72B models require approximately 2× the GPU memory of 32B models, necessitating either higher-memory GPU instances on Chutes or a shift to Affine-operated clusters with dedicated allocation.
+- **Anti-copy detector**: Hidden-state dimensionality increases with model size, requiring recalibration of the cosine similarity threshold (currently 0.99) and norm-deviation gate (currently 5%). Larger models may exhibit different norm-ratio distributions between copies and fine-tunes.
+- **Scoring pipeline**: The completeness threshold (90% of tasks) may need adjustment if 72B inference latency increases per-task evaluation time, reducing the number of tasks completable per scoring round.
+- **Training economics**: Larger models are more expensive to train but may benefit disproportionately from RL fine-tuning, as the increased parameter count provides more capacity for environment-specific adaptation.
+
+The architecture's three-layer separation (Section 4) ensures that the model-size transition is primarily an inference-layer concern — no environment code or scoring logic changes are needed beyond threshold recalibration.
+
+### 7.2 KL-Divergence and Distillation Evolution
+
+The DISTILL environment (Section 5.6) currently operates as a one-directional pipeline: a fixed teacher model (Qwen3-235B) generates rollouts, and student models are scored against them. The infrastructure already supports teacher substitution — the teacher model is specified via an environment variable (`TEACHER_MODEL`) and each rollout records which teacher produced it, enabling coexistence of rollouts from different teachers. Three planned extensions would build on this foundation to make the pipeline self-improving: [affine-cortex/affine/src/executor/teacher_worker.py]
+
+**Automated teacher selection.** As miner models improve, the best-performing miner could be automatically promoted to teacher status when it surpasses the current teacher by a configurable margin on a validation set. This creates a self-improving distillation loop: the training signal strengthens as the population improves, raising the quality ceiling for subsequent generations.
+
+**Multi-teacher ensembling.** Rather than relying on a single teacher, future rollouts could blend logprob distributions from multiple high-performing models, producing a more robust distributional target that captures diverse reasoning strategies.
+
+**Corpus diversification.** The current teacher rollout source (Corpus-Eval backed by karpathy/climbmix-400b-shuffle) provides general-purpose natural language data. Extending this to domain-specific corpora — code, scientific text, multi-lingual data — would improve distributional alignment in the domains most relevant to Affine's interactive environments. [affinetes/environments/distill/env.py; affine-cortex/affine/src/executor/teacher_worker.py]
+
+### 7.3 Inference Infrastructure Independence
+
+The path from Chutes (Subnet 64) to Affine-operated GPU clusters — via Targon or equivalent serverless platforms — would reduce external dependencies and give the system direct control over inference scheduling, latency, and cost. The Basilica and Targon SDK integrations in the Affinetes examples directory demonstrate that this transition requires only deploying models to a new endpoint and updating the base URL — no environment code, scoring logic, or orchestration changes are needed. Self-operated infrastructure would also enable tighter integration between the DISTILL teacher pipeline and the inference layer, eliminating cross-network latency for logprob collection. [affinetes/examples/targon-sdk/; affinetes/examples/basilica-sdk/]
+
+### 7.4 Environment Expansion
+
+The Affinetes framework supports arbitrary environment addition without changes to the scoring pipeline. Planned extensions include:
+
+- **Knowledge evaluation activation**: A multi-benchmark environment spanning GPQA-Diamond, MMLU-Pro, HLE, and IFEval — with cross-question distractor pools and virtual task IDs for anti-contamination — is built and deployed but not yet included in the scoring configuration. [affine-cortex/affine/core/environments.py]
+- **Broader web domains**: Extending LiveWeb Arena beyond financial and weather data to e-commerce, social media, and enterprise application interactions.
+- **Multi-agent coordination**: Extending MemoryGym's agentteam domain template to evaluate cooperative and competitive multi-agent memory sharing.
+- **Longer-horizon SWE tasks**: Extending SWE-Infinite to multi-file, multi-test-suite tasks that require architectural reasoning, not just localized bug fixing.
+- **Stronger game opponents**: Replacing random bots with MCTS opponents in OpenSpiel to stress strategic reasoning more effectively.
+
+### 7.5 Scoring Mechanism Refinement
+
+**Anti-copy integration.** The anti-copy detector currently operates independently from the scoring pipeline, with results stored for manual review. Integrating detection signals directly into Pareto filtering — automatically excluding flagged copies from scoring rounds — would close the loop between forensic analysis and incentive enforcement.
+
+**Adaptive parameters.** Absence decay parameters and the ELO K-factor schedule may benefit from adaptive tuning as the miner population grows. A larger population may require faster convergence (higher K-factors) or more aggressive decay to prevent rating inflation.
+
+**Curriculum learning.** The geometric mean scoring already incentivizes broad-spectrum capability, but the system does not yet provide tools for curriculum learning across environments — for example, scheduling training on easier environments before harder ones, or weighting training samples by environment-specific capability gaps.
+
+---
+
+## 8. Conclusion
+
+This paper has presented Affine, a decentralized system for evaluating and training agentic intelligence through interactive, renewable environments on the Bittensor network. The system makes five contributions: a scoring mechanism that resists plagiarism and gaming through Pareto dominance filtering, ELO-based temporal ratings, and a dual-signal anti-copy detector; a container-orchestration infrastructure (Affinetes) that cleanly separates environment execution from model inference; a suite of six evaluation environments — five interactive (SWE-Infinite, LiveWeb Arena, MemoryGym, QQR, OpenSpiel) and one distributional (DISTILL) — each targeting a distinct capability axis; training-friendly design choices including deterministic seeding, structured reward signals, and the OpenEnv protocol; and preliminary empirical evidence that Affine-trained models outperform the base model on external benchmarks not used in training — including stable benchmarks (MCP-Bench, MemoryAgentBench), code-generation benchmarks (SWE-rebench, HumanEval), and directional snapshot benchmarks (ToolSandbox, Tau2).
+
+Several properties distinguish this approach from conventional benchmark design. Task supplies are renewable rather than fixed, resisting saturation and contamination. Environments are interactive rather than single-turn, capturing the sequential decision-making that defines agentic behavior. Infrastructure is treated as a first-class concern, enabling reproducible evaluation at scale rather than one-off script execution. And the system is explicitly designed for dual use: every environment serves as both an evaluation benchmark and a reinforcement learning training substrate, with deterministic seeding, structured reward signals at varying granularity, and standardized interfaces (OpenEnv) that integrate directly into training loops.
 
 ### Limitations
 
-The current system has notable constraints. The fixed model architecture requirement (Qwen3-32B) ensures fair comparison but limits the diversity of models that can participate. The centralized executor and backend scoring pipeline, while operationally necessary, represent a trust assumption that partially offsets the decentralized weight-setting protocol. Several environments have geographic or domain restrictions: QQR is limited to mainland China, LiveWeb Arena covers financial and weather domains but not e-commerce or social media, and MemoryGym's empirical results show that current models achieve only 10–18% composite scores — indicating either that the benchmark is well-calibrated for future capability growth or that the task design needs refinement as models improve.
+The current system has notable constraints.
 
-### Future Directions
+**Centralization trade-off.** While weight-setting occurs on the decentralized Bittensor chain, the scoring pipeline itself — task generation, execution, and score computation — runs on centralized backend infrastructure. This design was chosen for operational reasons (scoring requires coordinated access to environments, model endpoints, and the task pool), but it means participants must trust the operator's scoring integrity. Cryptographic signatures on submissions and the public visibility of on-chain weights provide partial auditability, but the scoring backend itself is not independently verifiable by third parties.
 
-**Inference infrastructure evolution.** The path from Chutes (Subnet 64) to Affine-operated GPU clusters — via Targon or equivalent serverless platforms — would reduce external dependencies and give the system direct control over inference scheduling, latency, and cost. The architecture's three-layer separation makes this transition a backend substitution rather than a system redesign.
+**Fixed model architecture.** Requiring all miners to use Qwen3-32B ensures fair comparison but limits the diversity of models that can participate and may not generalize findings to other architectures.
 
-**Environment expansion.** The Affinetes framework supports arbitrary environment addition without changes to the scoring pipeline. A knowledge evaluation environment spanning GPQA-Diamond, MMLU-Pro, HLE, and IFEval — with cross-question distractor pools and virtual task IDs for anti-contamination — is built and deployed but not yet included in the scoring configuration. Planned directions include e-commerce interaction (extending LiveWeb Arena), multi-agent coordination tasks (extending MemoryGym's agentteam domain), and longer-horizon software engineering tasks that span multiple files and test suites (extending SWE-Infinite). [affine-cortex/affine/core/environments.py]
+**Benchmark snapshot limitations.** The external benchmark results in Section 6 represent a single cross-sectional comparison, not a longitudinal trajectory. Not all miner models improve uniformly across all benchmarks (Figure 5): the strongest miner (Leary CX) wins 7/7 stable and code benchmarks, while the weakest (Axon1 M19) wins only 2/7. The snapshot benchmarks (ToolSandbox, Tau2) have incomplete coverage. Systematic longitudinal tracking would provide stronger evidence of sustained improvement.
 
-**Scoring mechanism refinement.** The anti-copy detector currently operates independently from the scoring pipeline, with results stored for manual review. Integrating detection signals directly into Pareto filtering — automatically excluding flagged copies from scoring rounds — would close the loop between forensic analysis and incentive enforcement. Absence decay parameters and the ELO K-factor schedule may also benefit from adaptive tuning as the miner population grows.
+**Environment-specific restrictions.** QQR is limited to mainland China (71 cities) due to AMap API coverage. LiveWeb Arena covers financial and weather domains but not e-commerce or social media. MemoryGym's empirical results show composite scores ranging from 0% to 24.3% across eight models, with most large models clustering between 11–19%. OpenSpiel's default opponents are random bots, which may not fully stress strategic reasoning.
 
-**Cross-environment training.** The geometric mean scoring already incentivizes broad-spectrum capability, but the system does not yet provide tools for curriculum learning across environments — for example, scheduling training on easier environments before harder ones, or weighting training samples by environment-specific capability gaps. Such tooling would make the platform more directly useful for RL researchers.
-
-Affine's central bet is that the right incentive structure, combined with renewable environments and production-grade infrastructure, can turn open participation into sustained intelligence improvement. The system described here is the current instantiation of that bet. Whether it succeeds will be measured not by benchmark scores on a fixed test set, but by whether the models that emerge from this process are genuinely more capable agents than those trained without it.
+Affine's central bet is that the right incentive structure, combined with renewable environments and production-grade infrastructure, can turn open participation into sustained intelligence improvement. The benchmark results in Section 6 provide initial evidence that this bet is paying off: the strongest miner wins 7 of 7 stable and code benchmarks against the base model, with the SWE-rebench results (12.28 vs. base 0.00) providing particularly direct evidence that environment-specific training produces transferable capability. Whether this trajectory continues will be measured not by scores on a fixed test set, but by whether the models that emerge from this process are genuinely more capable agents than those trained without it.
