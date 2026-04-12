@@ -1,0 +1,1 @@
+- [No OpenSkill](feedback_no_openskill.md) — OpenSkill is deprecated; only ELO scoring in whitepaper
